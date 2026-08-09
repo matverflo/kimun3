@@ -50,6 +50,11 @@ class Curso(models.Model):
     def __str__(self):
         return self.titulo
 
+    @property
+    def duracion_horas(self):
+        """Retorna la duración estimada en horas (float)"""
+        return round(self.duracion_minutos / 60.0, 1) if self.duracion_minutos else 0
+
 
 class Material(models.Model):
     TIPO_CHOICES = [
