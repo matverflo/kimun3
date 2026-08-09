@@ -14,6 +14,7 @@ TareaModel = cast(Any, Tarea)
 @receiver(post_save, sender=Curso)
 def crear_eventos_curso(sender, instance, created, **kwargs):
     """Crea eventos de calendario cuando se crea o actualiza un curso."""
+    if kwargs.get('raw', False): return
     if created:
         EventoCalendarioModel.objects.create(
             titulo=f"Inicio: {instance.titulo}",
@@ -43,12 +44,14 @@ def crear_eventos_curso(sender, instance, created, **kwargs):
 @receiver(post_delete, sender=Curso)
 def eliminar_eventos_curso(sender, instance, **kwargs):
     """Elimina todos los eventos de calendario asociados al curso eliminado."""
+    if kwargs.get('raw', False): return
     EventoCalendarioModel.objects.filter(curso=instance).delete()
 
 
 @receiver(post_save, sender=Evaluacion)
 def crear_evento_evaluacion(sender, instance, created, **kwargs):
     """Crea evento de calendario cuando se crea una evaluación."""
+    if kwargs.get('raw', False): return
     if created:
         from django.utils import timezone
         from datetime import timedelta
@@ -70,11 +73,13 @@ def crear_evento_evaluacion(sender, instance, created, **kwargs):
 @receiver(post_delete, sender=Evaluacion)
 def eliminar_evento_evaluacion(sender, instance, **kwargs):
     """Elimina el evento de calendario asociado a la evaluación eliminada."""
+    if kwargs.get('raw', False): return
     EventoCalendarioModel.objects.filter(evaluacion=instance).delete()
 
 
 @receiver(pre_save, sender=Tarea)
 def preparar_evento_tarea(sender, instance, **kwargs):
+    if kwargs.get('raw', False): return
     if not instance.pk:
         instance._evento_tarea_filtro = None
         return
@@ -95,6 +100,7 @@ def preparar_evento_tarea(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Tarea)
 def crear_evento_tarea(sender, instance, created, **kwargs):
+    if kwargs.get('raw', False): return
     if not created and getattr(instance, '_evento_tarea_filtro', None):
         EventoCalendarioModel.objects.filter(**instance._evento_tarea_filtro).delete()
 
@@ -112,6 +118,7 @@ def crear_evento_tarea(sender, instance, created, **kwargs):
 
 @receiver(post_delete, sender=Tarea)
 def eliminar_evento_tarea(sender, instance, **kwargs):
+    if kwargs.get('raw', False): return
     EventoCalendarioModel.objects.filter(
         titulo=f"Tarea: {instance.titulo}",
         descripcion=instance.descripcion,
@@ -126,6 +133,7 @@ def eliminar_evento_tarea(sender, instance, **kwargs):
 
 @receiver(post_save)
 def sincronizar_evento_anuncio(sender, instance, **kwargs):
+    if kwargs.get('raw', False): return
     from anuncios.models import Anuncio
     from django.utils import timezone
 
@@ -162,6 +170,7 @@ def sincronizar_evento_anuncio(sender, instance, **kwargs):
 
 @receiver(post_delete)
 def eliminar_evento_anuncio(sender, instance, **kwargs):
+    if kwargs.get('raw', False): return
     from anuncios.models import Anuncio
 
     if sender is not Anuncio:
