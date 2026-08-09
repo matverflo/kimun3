@@ -1,0 +1,640 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Expediente - {{ colaborador.get_full_name }}{% endblock %}
+
+{% block extra_head %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 md:px-6 py-8">
+    
+    <!-- Top Navigation -->
+    <div class="mb-6">
+        <a href="{% url 'pacientes:dashboard_erp' %}" class="text-sm font-medium hover:underline flex items-center gap-1" style="color: var(--color-primary)">
+            <i class="bi bi-arrow-left"></i> Volver al Dashboard
+        </a>
+    </div>
+
+    <!-- Header / Profile Info -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-sm p-6 mb-8 flex flex-col md:flex-row gap-6 items-start md:items-center" style="border-color: var(--color-border);">
+        <div class="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold shrink-0" style="background-color: var(--color-info-bg); color: var(--color-info);">
+            {{ colaborador.first_name|first }}{{ colaborador.last_name|first }}
+        </div>
+        
+        <div class="flex-1">
+            <h1 class="text-2xl font-bold" style="color: var(--color-text)">{{ colaborador.get_full_name }}</h1>
+            <p class="text-gray-500 dark:text-gray-400 mt-1">{{ colaborador.cargo.nombre }} &bull; RUT: {{ colaborador.rut }}</p>
+            {% if colaborador.especialidades_externas %}
+            <div class="mt-3">
+                <span class="text-xs font-semibold uppercase tracking-wider text-gray-500">Especialidades:</span>
+                <p class="text-sm mt-1 p-2 bg-gray-50 dark:bg-slate-700/50 rounded-lg inline-block" style="color: var(--color-text)">{{ colaborador.especialidades_externas }}</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="shrink-0 w-full md:w-auto text-center p-4 rounded-xl border" style="background-color: var(--color-surface-raised); border-color: var(--color-border);">
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Carga de Pacientes</p>
+            <div class="flex items-end justify-center gap-2">
+                <span class="text-3xl font-bold" style="color: var(--color-primary)">{{ pacientes_actuales.count }}</span>
+                <span class="text-gray-400 mb-1">/ {{ limite_actual }}</span>
+            </div>
+            <button class="mt-2 text-xs font-medium hover:underline flex items-center justify-center gap-1 w-full" style="color: var(--color-info)">
+                <i class="bi bi-pencil"></i> Modificar Límite (Excepción)
+            </button>
+        </div>
+    </div>
+
+    <!-- KPI Cards Grid -->
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8 fade-in stagger-1">
+        <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-sm p-4 text-center" style="border-color: var(--color-border);">
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Horas Semana</p>
+            <p class="text-2xl font-bold" style="color: var(--color-primary)">{{ horas_semana }}<span class="text-sm text-gray-400 font-normal ml-1">h</span></p>
+        </div>
+        <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-sm p-4 text-center" style="border-color: var(--color-border);">
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Horas Mes</p>
+            <p class="text-2xl font-bold" style="color: var(--color-info)">{{ horas_mes }}<span class="text-sm text-gray-400 font-normal ml-1">h</span></p>
+        </div>
+        <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-sm p-4 text-center" style="border-color: var(--color-border);">
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Completados</p>
+            <p class="text-2xl font-bold text-green-500">{{ cursos_completados }}</p>
+        </div>
+        <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-sm p-4 text-center" style="border-color: var(--color-border);">
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">En Proceso</p>
+            <p class="text-2xl font-bold text-blue-500">{{ cursos_en_curso }}</p>
+        </div>
+        <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-sm p-4 text-center" style="border-color: var(--color-border);">
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Pendientes</p>
+            <p class="text-2xl font-bold text-amber-500">{{ cursos_pendientes }}</p>
+        </div>
+    </div>
+
+    <!-- Formación Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        
+        <!-- Formación Chart (Bar) -->
+        <div class="lg:col-span-2">
+            {% if chart_labels_30 %}
+            <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-sm p-6 h-full fade-in stagger-2 flex flex-col" style="border-color: var(--color-border);">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                    <h2 class="text-lg font-bold flex items-center gap-2" style="color: var(--color-text)">
+                        <i class="bi bi-bar-chart-line" style="color: var(--color-primary)"></i> Duración de Últimos Cursos
+                    </h2>
+                    <select id="chartPeriod" class="text-sm rounded-lg border px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-slate-700" style="color: var(--color-text); border-color: var(--color-border)">
+                        <option value="30">Mensual (Últimos 30 días)</option>
+                        <option value="7">Semanal (Últimos 7 días)</option>
+                    </select>
+                </div>
+                <div class="relative w-full flex-1 min-h-[250px]">
+                    <canvas id="horasChart"></canvas>
+                </div>
+            </div>
+            {% else %}
+            <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-sm p-8 h-full flex flex-col justify-center items-center text-center fade-in stagger-2" style="border-color: var(--color-border);">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-50 dark:bg-slate-700/50 mb-4 text-gray-400">
+                    <i class="bi bi-bar-chart text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold" style="color: var(--color-text)">Sin actividad reciente</h3>
+                <p class="text-gray-500 mt-1">El colaborador no tiene cursos en los últimos 30 días.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Estado Global Chart (Doughnut) -->
+        <div class="lg:col-span-1">
+            <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-sm p-6 h-full fade-in stagger-3 flex flex-col" style="border-color: var(--color-border);">
+                <h2 class="text-lg font-bold mb-4 flex items-center gap-2" style="color: var(--color-text)">
+                    <i class="bi bi-pie-chart" style="color: var(--color-primary)"></i> Estado de Formación
+                </h2>
+                <div class="relative w-full flex-1 min-h-[250px] flex items-center justify-center">
+                    <canvas id="estadoChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        
+        <!-- Left Column (Courses) -->
+        <div class="xl:col-span-2 space-y-8 fade-in stagger-3">
+
+            <!-- Historial de Cursos -->
+            <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-sm overflow-hidden" style="border-color: var(--color-border);">
+                <div class="px-6 py-5 border-b flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
+                    <h2 class="text-lg font-bold flex items-center gap-2" style="color: var(--color-text)">
+                        <i class="bi bi-journal-check" style="color: var(--color-primary)"></i> Historial de Cursos
+                    </h2>
+                    <button onclick="document.getElementById('modal-asignar-curso').classList.remove('hidden')" class="text-sm font-medium px-4 py-2 rounded-lg border hover:bg-gray-50 dark:hover:bg-slate-700 transition shadow-sm bg-white dark:bg-slate-800" style="color: var(--color-text); border-color: var(--color-border);">
+                        <i class="bi bi-plus-lg"></i> Asignar Curso
+                    </button>
+                </div>
+                <!-- Filtros de Estado -->
+                <div class="px-6 py-3 border-b bg-gray-50/30 dark:bg-gray-800/10 flex gap-2 overflow-x-auto" style="border-color: var(--color-border);">
+                    <button class="filter-btn active px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 dark:bg-slate-700 text-gray-800 dark:text-gray-200 transition-colors" data-filter="todos">Todos</button>
+                    <button class="filter-btn px-3 py-1 rounded-full text-xs font-semibold hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400 transition-colors" data-filter="completado">Completados</button>
+                    <button class="filter-btn px-3 py-1 rounded-full text-xs font-semibold hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400 transition-colors" data-filter="en_progreso">En Curso</button>
+                    <button class="filter-btn px-3 py-1 rounded-full text-xs font-semibold hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400 transition-colors" data-filter="asignado">Pendientes</button>
+                </div>
+                
+                <div class="divide-y" id="cursosListContainer" style="border-color: var(--color-border);">
+                    {% for insc in inscripciones %}
+                    <div class="curso-item p-6 hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors" data-estado="{{ insc.estado }}">
+                        <div class="flex flex-col sm:flex-row justify-between gap-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-1">
+                                    <h3 class="font-bold text-base" style="color: var(--color-text)">{{ insc.curso.titulo }}</h3>
+                                    {% if insc.estado == 'completado' %}
+                                        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold border" style="background-color: var(--color-success-bg); color: var(--color-success); border-color: rgba(22, 163, 74, 0.2)">Completado</span>
+                                    {% elif insc.estado == 'en_progreso' %}
+                                        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold border" style="background-color: var(--color-info-bg); color: var(--color-info); border-color: rgba(37, 99, 235, 0.2)">En Curso</span>
+                                    {% else %}
+                                        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold border" style="background-color: var(--color-warning-bg); color: var(--color-warning); border-color: rgba(217, 119, 6, 0.2)">Pendiente</span>
+                                    {% endif %}
+                                </div>
+                                <p class="text-sm text-gray-500 mb-3">{{ insc.curso.categoria.nombre }} &bull; {{ insc.curso.duracion_horas }} horas</p>
+                                
+                                <div class="flex flex-wrap gap-x-6 gap-y-2 text-xs">
+                                    <div class="flex items-center gap-1.5 text-gray-500">
+                                        <i class="bi bi-calendar-event"></i> Asignado: <span class="font-medium text-gray-700 dark:text-gray-300">{{ insc.fecha_asignacion|date:"d M, Y" }}</span>
+                                    </div>
+                                    {% if insc.fecha_inicio_real %}
+                                    <div class="flex items-center gap-1.5 text-gray-500">
+                                        <i class="bi bi-play-circle"></i> Iniciado: <span class="font-medium text-gray-700 dark:text-gray-300">{{ insc.fecha_inicio_real|date:"d M, Y" }}</span>
+                                    </div>
+                                    {% endif %}
+                                    {% if insc.estado == 'completado' and insc.fecha_termino %}
+                                    <div class="flex items-center gap-1.5" style="color: var(--color-success)">
+                                        <i class="bi bi-check2-circle"></i> Terminado: <span class="font-medium">{{ insc.fecha_termino|date:"d M, Y" }}</span>
+                                    </div>
+                                    {% elif insc.fecha_limite %}
+                                    <div class="flex items-center gap-1.5 text-red-500">
+                                        <i class="bi bi-clock-history"></i> Límite: <span class="font-medium">{{ insc.fecha_limite|date:"d M, Y" }}</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="shrink-0 flex sm:flex-col items-center sm:items-end justify-center gap-2">
+                                {% if insc.estado == 'completado' %}
+                                <a href="{% url 'pacientes:descargar_certificado' insc.id %}" target="_blank" class="px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 text-white shadow-sm hover:opacity-90 transition-opacity whitespace-nowrap" style="background-color: var(--color-primary)">
+                                    <i class="bi bi-download"></i> Certificado
+                                </a>
+                                {% else %}
+                                <button onclick="alert('Se ha enviado un aviso y recordatorio al correo electrónico del colaborador.');" class="px-4 py-2 rounded-lg text-sm font-medium border flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors shadow-sm bg-white dark:bg-slate-800 whitespace-nowrap" style="color: var(--color-text); border-color: var(--color-border)">
+                                    <i class="bi bi-bell"></i> Enviar Aviso
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="p-8 text-center text-gray-500">
+                        <i class="bi bi-journal-x text-4xl mb-3 text-gray-300"></i>
+                        <p>Este colaborador aún no tiene cursos asignados.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- Right Column (Pacientes) -->
+        <div class="space-y-8 fade-in stagger-4">
+            
+            <!-- Pacientes Asignados -->
+            <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-sm" style="border-color: var(--color-border);">
+                <div class="px-6 py-5 border-b flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
+                    <h2 class="text-lg font-bold flex items-center gap-2" style="color: var(--color-text)">
+                        <i class="bi bi-people" style="color: var(--color-primary)"></i> Pacientes Asignados
+                    </h2>
+                </div>
+                <div class="divide-y" style="border-color: var(--color-border);">
+                    {% for paciente in pacientes_actuales %}
+                    <div class="p-5 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group">
+                        <div>
+                            <p class="font-semibold text-sm" style="color: var(--color-text)">{{ paciente.nombre_completo }}</p>
+                            <p class="text-xs text-gray-500 mt-0.5">{{ paciente.rut }}</p>
+                        </div>
+                        <form action="{% url 'pacientes:desvincular_paciente' colaborador.id paciente.id %}" method="POST" onsubmit="return confirm('¿Seguro que deseas desvincular a este paciente de la carga de este colaborador?');">
+                            {% csrf_token %}
+                            <button type="submit" class="text-red-500 opacity-50 hover:opacity-100 transition-opacity p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg" title="Desasignar">
+                                <i class="bi bi-person-dash text-lg"></i>
+                            </button>
+                        </form>
+                    </div>
+                    {% empty %}
+                    <div class="p-8 text-center text-gray-500">
+                        <i class="bi bi-emoji-smile text-3xl mb-2 text-gray-300"></i>
+                        <p class="text-sm">No tiene pacientes asignados en este momento.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="p-4 border-t bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border)">
+                    <button onclick="document.getElementById('modal-asignar-paciente').classList.remove('hidden')" class="w-full py-2 rounded-lg border border-dashed text-sm font-medium hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2" style="color: var(--color-text); border-color: var(--color-border)">
+                        <i class="bi bi-person-plus"></i> Asignar Paciente
+                    </button>
+                </div>
+            </div>
+            
+        </div>
+        
+    </div>
+</div>
+
+<!-- Modal Asignar Paciente -->
+<div id="modal-asignar-paciente" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/50 fade-in" style="backdrop-filter: blur(4px);">
+    <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-lg max-w-md w-full mx-4 overflow-hidden" style="border-color: var(--color-border);">
+        <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
+            <h3 class="font-bold text-lg" style="color: var(--color-text)">Asignar Paciente</h3>
+            <button onclick="document.getElementById('modal-asignar-paciente').classList.add('hidden')" class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <form action="{% url 'pacientes:asignar_paciente' colaborador.id %}" method="POST">
+            {% csrf_token %}
+            <div class="p-6">
+                <p class="block text-sm font-medium mb-3" style="color: var(--color-text)">Buscar paciente por Nombre o RUT:</p>
+                
+                <!-- Input de búsqueda con Icono -->
+                <div class="relative mb-4">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-400">
+                        <i class="bi bi-search"></i>
+                    </div>
+                    <input type="text" id="pacienteSearchInput" class="w-full rounded-xl border pl-11 pr-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-slate-700/50 transition-all shadow-inner" style="color: var(--color-text); border-color: var(--color-border)" placeholder="Ej. Juan Pérez o 12.345.678-9" autocomplete="off">
+                </div>
+
+                <!-- Lista scrolleable de resultados -->
+                <div class="border rounded-xl overflow-hidden bg-gray-50/50 dark:bg-slate-700/30 max-h-56 overflow-y-auto" style="border-color: var(--color-border)">
+                    <input type="hidden" name="paciente_id" id="selectedPacienteId" required>
+                    <ul id="pacienteList" class="divide-y divide-gray-100 dark:divide-gray-700/50">
+                        {% for p in pacientes_disponibles %}
+                        <li>
+                            <button type="button" class="paciente-option w-full text-left px-5 py-3 border-l-4 border-transparent hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex flex-col focus:outline-none group" data-id="{{ p.id }}" data-search="{{ p.nombre_completo|lower }} {{ p.rut|lower }}">
+                                <span class="font-semibold text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" style="color: var(--color-text)">{{ p.nombre_completo }}</span>
+                                <span class="text-xs text-gray-500 font-mono mt-0.5">RUT: {{ p.rut }}</span>
+                            </button>
+                        </li>
+                        {% empty %}
+                        <li class="px-5 py-8 text-center text-sm text-gray-500">
+                            <i class="bi bi-check-circle text-2xl mb-2 text-green-500 block"></i>
+                            Todos los pacientes ya están asignados a este colaborador.
+                        </li>
+                        {% endfor %}
+                        
+                        <!-- Mensaje sin resultados (Oculto por defecto) -->
+                        <li id="noResultsMsg" class="px-5 py-8 text-center text-sm text-gray-500 hidden">
+                            <i class="bi bi-search text-2xl mb-2 text-gray-400 block"></i>
+                            No se encontraron pacientes con esa búsqueda.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t flex justify-end gap-3 bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
+                <button type="button" onclick="document.getElementById('modal-asignar-paciente').classList.add('hidden')" class="px-4 py-2 rounded-lg border text-sm font-medium hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" style="color: var(--color-text); border-color: var(--color-border)">Cancelar</button>
+                <button type="submit" id="btnSubmitPaciente" disabled class="px-4 py-2 rounded-lg text-sm font-medium text-white shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed" style="background-color: var(--color-primary)">Asignar Selección</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Lógica del buscador premium de pacientes
+    const searchInput = document.getElementById('pacienteSearchInput');
+    const listItems = document.querySelectorAll('.paciente-option');
+    const noResults = document.getElementById('noResultsMsg');
+    const hiddenInput = document.getElementById('selectedPacienteId');
+    const submitBtn = document.getElementById('btnSubmitPaciente');
+    
+    if(searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            const term = e.target.value.toLowerCase().trim();
+            let count = 0;
+            
+            listItems.forEach(item => {
+                const searchData = item.getAttribute('data-search');
+                if(searchData.includes(term)) {
+                    item.parentElement.style.display = '';
+                    count++;
+                } else {
+                    item.parentElement.style.display = 'none';
+                }
+            });
+            
+            if(count === 0 && listItems.length > 0) {
+                noResults.classList.remove('hidden');
+            } else {
+                noResults.classList.add('hidden');
+            }
+        });
+    }
+
+    listItems.forEach(item => {
+        item.addEventListener('click', function() {
+            // Limpiar estilos de los demás
+            listItems.forEach(i => {
+                i.classList.remove('bg-blue-50', 'dark:bg-blue-900/30', 'border-blue-500');
+                i.classList.add('border-transparent');
+            });
+            
+            // Aplicar estilo al seleccionado
+            this.classList.remove('border-transparent');
+            this.classList.add('bg-blue-50', 'dark:bg-blue-900/30', 'border-blue-500');
+            
+            // Actualizar datos del form
+            hiddenInput.value = this.getAttribute('data-id');
+            submitBtn.disabled = false;
+        });
+    });
+});
+</script>
+
+<!-- Modal Asignar Curso -->
+<div id="modal-asignar-curso" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/50 fade-in" style="backdrop-filter: blur(4px);">
+    <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-lg max-w-md w-full mx-4 overflow-hidden" style="border-color: var(--color-border);">
+        <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
+            <h3 class="font-bold text-lg" style="color: var(--color-text)">Asignar Nuevo Curso</h3>
+            <button onclick="document.getElementById('modal-asignar-curso').classList.add('hidden')" class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <form action="{% url 'pacientes:asignar_curso' colaborador.id %}" method="POST">
+            {% csrf_token %}
+            <div class="p-6">
+                <p class="block text-sm font-medium mb-3" style="color: var(--color-text)">Buscar curso por nombre:</p>
+                
+                <!-- Input de búsqueda con Icono -->
+                <div class="relative mb-4">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-400">
+                        <i class="bi bi-search"></i>
+                    </div>
+                    <input type="text" id="cursoSearchInput" class="w-full rounded-xl border pl-11 pr-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-slate-700/50 transition-all shadow-inner" style="color: var(--color-text); border-color: var(--color-border)" placeholder="Ej. Primeros Auxilios..." autocomplete="off">
+                </div>
+
+                <!-- Lista scrolleable de resultados -->
+                <div class="border rounded-xl overflow-hidden bg-gray-50/50 dark:bg-slate-700/30 max-h-56 overflow-y-auto" style="border-color: var(--color-border)">
+                    <input type="hidden" name="curso_id" id="selectedCursoId" required>
+                    <ul id="cursoList" class="divide-y divide-gray-100 dark:divide-gray-700/50">
+                        {% for c in cursos_disponibles %}
+                        <li>
+                            <button type="button" class="curso-option w-full text-left px-5 py-3 border-l-4 border-transparent hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex flex-col focus:outline-none group" data-id="{{ c.id }}" data-search="{{ c.titulo|lower }}">
+                                <span class="font-semibold text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" style="color: var(--color-text)">{{ c.titulo }}</span>
+                                <span class="text-xs text-gray-500 mt-0.5"><i class="bi bi-clock"></i> {{ c.duracion_horas }} horas académicas</span>
+                            </button>
+                        </li>
+                        {% empty %}
+                        <li class="px-5 py-8 text-center text-sm text-gray-500">
+                            <i class="bi bi-check-circle text-2xl mb-2 text-green-500 block"></i>
+                            El colaborador ya tiene asignados todos los cursos del catálogo.
+                        </li>
+                        {% endfor %}
+                        
+                        <!-- Mensaje sin resultados (Oculto por defecto) -->
+                        <li id="noCourseResultsMsg" class="px-5 py-8 text-center text-sm text-gray-500 hidden">
+                            <i class="bi bi-search text-2xl mb-2 text-gray-400 block"></i>
+                            No se encontraron cursos con esa búsqueda.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t flex justify-end gap-3 bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
+                <button type="button" onclick="document.getElementById('modal-asignar-curso').classList.add('hidden')" class="px-4 py-2 rounded-lg border text-sm font-medium hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" style="color: var(--color-text); border-color: var(--color-border)">Cancelar</button>
+                <button type="submit" id="btnSubmitCurso" disabled class="px-4 py-2 rounded-lg text-sm font-medium text-white shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed" style="background-color: var(--color-primary)">Asignar Selección</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Lógica del buscador premium de cursos
+    const searchInput = document.getElementById('cursoSearchInput');
+    const listItems = document.querySelectorAll('.curso-option');
+    const noResults = document.getElementById('noCourseResultsMsg');
+    const hiddenInput = document.getElementById('selectedCursoId');
+    const submitBtn = document.getElementById('btnSubmitCurso');
+    
+    if(searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            const term = e.target.value.toLowerCase().trim();
+            let count = 0;
+            
+            listItems.forEach(item => {
+                const searchData = item.getAttribute('data-search');
+                if(searchData.includes(term)) {
+                    item.parentElement.style.display = '';
+                    count++;
+                } else {
+                    item.parentElement.style.display = 'none';
+                }
+            });
+            
+            if(count === 0 && listItems.length > 0) {
+                noResults.classList.remove('hidden');
+            } else {
+                noResults.classList.add('hidden');
+            }
+        });
+    }
+
+    listItems.forEach(item => {
+        item.addEventListener('click', function() {
+            // Limpiar estilos de los demás
+            listItems.forEach(i => {
+                i.classList.remove('bg-blue-50', 'dark:bg-blue-900/30', 'border-blue-500');
+                i.classList.add('border-transparent');
+            });
+            
+            // Aplicar estilo al seleccionado
+            this.classList.remove('border-transparent');
+            this.classList.add('bg-blue-50', 'dark:bg-blue-900/30', 'border-blue-500');
+            
+            // Actualizar datos del form
+            hiddenInput.value = this.getAttribute('data-id');
+            submitBtn.disabled = false;
+        });
+    });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Filtros del Historial de Cursos
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const cursoItems = document.querySelectorAll('.curso-item');
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Actualizar estilos de los botones
+            filterBtns.forEach(b => {
+                b.classList.remove('bg-gray-200', 'dark:bg-slate-700', 'text-gray-800', 'dark:text-gray-200', 'active');
+                b.classList.add('text-gray-600', 'dark:text-gray-400');
+            });
+            this.classList.remove('text-gray-600', 'dark:text-gray-400');
+            this.classList.add('bg-gray-200', 'dark:bg-slate-700', 'text-gray-800', 'dark:text-gray-200', 'active');
+
+            const filterValue = this.getAttribute('data-filter');
+
+            // Filtrar elementos
+            cursoItems.forEach(item => {
+                if (filterValue === 'todos' || item.getAttribute('data-estado') === filterValue) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('horasChart');
+    if(!ctx) return;
+    
+    // Obtener variables de CSS para colores
+    const rootStyles = getComputedStyle(document.documentElement);
+    const primaryColor = rootStyles.getPropertyValue('--color-primary').trim() || '#1e3a5f';
+    const gridColor = rootStyles.getPropertyValue('--color-border').trim() || '#dee2e6';
+    const textColor = rootStyles.getPropertyValue('--color-text-secondary').trim() || '#6c757d';
+    
+    // Datos inyectados desde Django
+    const chartData = {
+        '30': { labels: {{ chart_labels_30|safe }}, values: {{ chart_values_30|safe }} },
+        '7':  { labels: {{ chart_labels_7|safe }}, values: {{ chart_values_7|safe }} }
+    };
+    
+    // Default a 30 días
+    let currentPeriod = '30';
+    
+    const data = {
+        labels: chartData[currentPeriod].labels,
+        datasets: [{
+            label: 'Horas del Curso',
+            data: chartData[currentPeriod].values,
+            backgroundColor: 'rgba(59, 130, 246, 0.85)', // Tailwind blue-500
+            hoverBackgroundColor: 'rgba(37, 99, 235, 1)', // Tailwind blue-600
+            borderColor: 'transparent',
+            borderWidth: 0,
+            borderRadius: 6,
+            barThickness: 32,
+            maxBarThickness: 40
+        }]
+    };
+    
+    const config = {
+        type: 'bar',
+        data: data,
+        options: {
+            indexAxis: 'y', // ESTO HACE QUE EL GRÁFICO SEA HORIZONTAL
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleFont: { size: 13, family: 'Inter' },
+                    bodyFont: { size: 14, family: 'Inter', weight: 'bold' },
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            // En gráficos horizontales el valor está en X, no en Y
+                            return context.parsed.x + ' hrs de formación';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    grid: {
+                        color: gridColor,
+                        drawBorder: false,
+                        borderDash: [5, 5]
+                    },
+                    ticks: {
+                        color: textColor,
+                        font: { family: 'Inter', size: 12 },
+                        stepSize: 5
+                    }
+                },
+                y: {
+                    grid: {
+                        display: false,
+                        drawBorder: false,
+                    },
+                    ticks: {
+                        color: textColor,
+                        font: { family: 'Inter', size: 12, weight: '500' }
+                    }
+                }
+            }
+        }
+    };
+    
+    if (ctx) {
+        const myChart = new Chart(ctx.getContext('2d'), config);
+        
+        // Lógica para alternar periodos
+        const chartPeriodSelect = document.getElementById('chartPeriod');
+        if (chartPeriodSelect) {
+            chartPeriodSelect.addEventListener('change', function(e) {
+                currentPeriod = e.target.value;
+                myChart.data.labels = chartData[currentPeriod].labels;
+                myChart.data.datasets[0].data = chartData[currentPeriod].values;
+                myChart.update();
+            });
+        }
+    }
+    
+    // --- ESTADO CHART (DOUGHNUT) ---
+    const ctxEstado = document.getElementById('estadoChart');
+    if(ctxEstado) {
+        const estadoConfig = {
+            type: 'doughnut',
+            data: {
+                labels: ['Completados', 'En Proceso', 'Pendientes'],
+                datasets: [{
+                    data: [
+                        {{ cursos_completados|default:0 }},
+                        {{ cursos_en_curso|default:0 }},
+                        {{ cursos_pendientes|default:0 }}
+                    ],
+                    backgroundColor: [
+                        '#10b981', // Emerald 500 (Completados)
+                        '#3b82f6', // Blue 500 (En proceso)
+                        '#f59e0b'  // Amber 500 (Pendientes)
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: textColor,
+                            font: { family: 'Inter', size: 12 },
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    }
+                }
+            }
+        };
+        new Chart(ctxEstado.getContext('2d'), estadoConfig);
+    }
+});
+</script>
+{% endblock %}

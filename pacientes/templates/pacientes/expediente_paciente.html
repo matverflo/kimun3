@@ -1,0 +1,415 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Expediente - {{ paciente.nombre_completo }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-8">
+    
+    <!-- Botón Volver -->
+    <div class="fade-in">
+        <a href="{% url 'pacientes:dashboard_erp' %}" class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
+            <i class="bi bi-arrow-left"></i> Volver al Panel
+        </a>
+    </div>
+
+    <!-- Cabecera del Perfil -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 border shadow-sm flex flex-col md:flex-row gap-8 items-start md:items-center relative overflow-hidden fade-in stagger-1" style="border-color: var(--color-border);">
+        <div class="absolute top-0 right-0 w-64 h-64 opacity-5 pointer-events-none" style="background: radial-gradient(circle, var(--color-primary) 0%, transparent 70%);"></div>
+        
+        <!-- Avatar/Icono Grande -->
+        <div class="w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold shadow-inner shrink-0" style="background-color: var(--color-surface); color: var(--color-primary); border: 2px solid var(--color-border);">
+            {{ paciente.nombre_completo|first }}
+        </div>
+        
+        <!-- Info Principal -->
+        <div class="flex-1 space-y-2 relative z-10">
+            <div class="flex flex-wrap items-center gap-3">
+                <h1 class="text-3xl font-bold tracking-tight" style="color: var(--color-text)">{{ paciente.nombre_completo }}</h1>
+                
+                {% if paciente.nivel_dependencia == 'leve' %}
+                    <span class="px-3 py-1 text-sm rounded-full font-semibold border" style="background-color: var(--color-success-bg); color: var(--color-success); border-color: rgba(22, 163, 74, 0.2)">Dependencia Leve</span>
+                {% elif paciente.nivel_dependencia == 'moderada' %}
+                    <span class="px-3 py-1 text-sm rounded-full font-semibold border" style="background-color: var(--color-info-bg); color: var(--color-info); border-color: rgba(37, 99, 235, 0.2)">Dependencia Moderada</span>
+                {% elif paciente.nivel_dependencia == 'severa' %}
+                    <span class="px-3 py-1 text-sm rounded-full font-semibold border" style="background-color: var(--color-warning-bg); color: var(--color-warning); border-color: rgba(217, 119, 6, 0.2)">Dependencia Severa</span>
+                {% else %}
+                    <span class="px-3 py-1 text-sm rounded-full font-semibold border" style="background-color: var(--color-pink-bg); color: var(--color-pink); border-color: rgba(219, 39, 119, 0.2)">Dependencia Postrado</span>
+                {% endif %}
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-500">
+                <span class="flex items-center gap-1.5"><i class="bi bi-person-vcard"></i> RUT: {{ paciente.rut }}</span>
+                <span class="flex items-center gap-1.5"><i class="bi bi-calendar-heart"></i> {{ paciente.edad }} años</span>
+                <span class="flex items-center gap-1.5"><i class="bi bi-box-arrow-in-right"></i> Ingreso: {{ paciente.fecha_ingreso|date:"d M, Y" }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        
+        <!-- Left Column (Info & Hitos) -->
+        <div class="xl:col-span-2 space-y-8 fade-in stagger-2">
+
+            <!-- Ficha Médica -->
+            <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-sm overflow-hidden" style="border-color: var(--color-border);">
+                <div class="px-6 py-5 border-b bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
+                    <h2 class="text-lg font-bold flex items-center gap-2" style="color: var(--color-text)">
+                        <i class="bi bi-clipboard2-pulse" style="color: var(--color-primary)"></i> Información Médica
+                    </h2>
+                </div>
+                <div class="p-6 space-y-6">
+                    <div>
+                        <h3 class="text-sm font-semibold uppercase text-gray-500 tracking-wider mb-2 flex items-center gap-2"><i class="bi bi-bandaid"></i> Patologías Diagnósticas</h3>
+                        <p class="text-sm p-4 rounded-lg bg-gray-50 dark:bg-slate-700/30" style="color: var(--color-text)">
+                            {% if paciente.patologias %}{{ paciente.patologias|linebreaksbr }}{% else %}No hay patologías registradas.{% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold uppercase text-gray-500 tracking-wider mb-2 flex items-center gap-2"><i class="bi bi-exclamation-triangle"></i> Requerimientos Especiales</h3>
+                        <p class="text-sm p-4 rounded-lg bg-gray-50 dark:bg-slate-700/30" style="color: var(--color-text)">
+                            {% if paciente.requerimientos_especiales %}{{ paciente.requerimientos_especiales|linebreaksbr }}{% else %}Ningún requerimiento especial registrado.{% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hitos Clínicos -->
+            <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-sm overflow-hidden" style="border-color: var(--color-border);">
+                <div class="px-6 py-5 border-b flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
+                    <h2 class="text-lg font-bold flex items-center gap-2" style="color: var(--color-text)">
+                        <i class="bi bi-clock-history" style="color: var(--color-primary)"></i> Hitos Clínicos
+                    </h2>
+                    <button onclick="document.getElementById('modal-agregar-hito').classList.remove('hidden')" class="text-sm font-medium px-4 py-2 rounded-lg border hover:bg-gray-50 dark:hover:bg-slate-700 transition shadow-sm bg-white dark:bg-slate-800" style="color: var(--color-text); border-color: var(--color-border);">
+                        <i class="bi bi-plus-lg"></i> Agregar Hito
+                    </button>
+                </div>
+                
+                <div class="p-6">
+                    {% if hitos_clinicos %}
+                        <div class="relative border-l-2 ml-3 border-gray-200 dark:border-gray-700 space-y-8 pb-4">
+                            {% for hito in hitos_clinicos %}
+                            <div class="relative pl-6">
+                                <!-- Bullet -->
+                                {% if hito.importancia == 'alta' %}
+                                    <div class="absolute w-4 h-4 rounded-full -left-[9px] top-1 border-4 border-white dark:border-slate-800" style="background-color: var(--color-pink);"></div>
+                                {% elif hito.importancia == 'media' %}
+                                    <div class="absolute w-4 h-4 rounded-full -left-[9px] top-1 border-4 border-white dark:border-slate-800" style="background-color: var(--color-warning);"></div>
+                                {% else %}
+                                    <div class="absolute w-4 h-4 rounded-full -left-[9px] top-1 border-4 border-white dark:border-slate-800" style="background-color: var(--color-primary);"></div>
+                                {% endif %}
+                                
+                                <!-- Contenido -->
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
+                                    <span class="text-xs font-semibold text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md inline-block">{{ hito.fecha|date:"d M, Y - H:i" }}</span>
+                                    <span class="text-xs text-gray-400 mt-1 sm:mt-0 flex items-center gap-1">
+                                        <i class="bi bi-person"></i> {{ hito.responsable.get_full_name }} ({{ hito.responsable.rut }}) - {{ hito.responsable.cargo.nombre|default:"Admin" }}
+                                    </span>
+                                </div>
+                                <p class="text-sm" style="color: var(--color-text)">{{ hito.descripcion|linebreaksbr }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-10 text-gray-500">
+                            <i class="bi bi-journal-x text-4xl mb-3 text-gray-300 block"></i>
+                            <p>No hay hitos clínicos registrados aún.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+        
+        <!-- Right Column (Personal y Rutinas) -->
+        <div class="space-y-8 fade-in stagger-3">
+            
+            <!-- Tareas y Rutinas Diarias -->
+            <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-sm" style="border-color: var(--color-border);">
+                <div class="px-6 py-5 border-b flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
+                    <h2 class="text-lg font-bold flex items-center gap-2" style="color: var(--color-text)">
+                        <i class="bi bi-card-checklist" style="color: var(--color-primary)"></i> Rutina y Medicina (Hoy)
+                    </h2>
+                    <a href="{% url 'pacientes:descargar_historial_rutinas' paciente.id %}" class="text-gray-400 hover:text-blue-500 transition-colors" title="Descargar Historial">
+                        <i class="bi bi-file-earmark-pdf text-xl"></i>
+                    </a>
+                </div>
+                
+                <div class="p-6">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Pendientes ({{ rutinas_pendientes.count }})</h4>
+                    <div class="space-y-3 mb-6">
+                        {% for rutina in rutinas_pendientes %}
+                        <div class="flex items-center justify-between p-3 rounded-lg border bg-white dark:bg-slate-800 shadow-sm" style="border-color: var(--color-border);">
+                            <div>
+                                <p class="font-semibold text-sm" style="color: var(--color-text)">{{ rutina.titulo }}</p>
+                                <p class="text-xs text-gray-500 mt-0.5" title="Cualquier colaborador puede marcar esta tarea como completada">
+                                    Encargado: <span class="font-medium">{{ rutina.colaborador_encargado.first_name|default:"Equipo General" }}</span>
+                                </p>
+                            </div>
+                            <form action="{% url 'pacientes:completar_rutina' paciente.id rutina.id %}" method="POST">
+                                {% csrf_token %}
+                                <button type="submit" class="w-8 h-8 rounded-full border flex items-center justify-center text-gray-400 hover:text-white hover:bg-green-500 hover:border-green-500 transition-colors" title="Marcar como realizada (por {{ request.user.first_name }})">
+                                    <i class="bi bi-check-lg"></i>
+                                </button>
+                            </form>
+                        </div>
+                        {% empty %}
+                        <p class="text-xs text-gray-500 italic">No hay tareas pendientes para hoy.</p>
+                        {% endfor %}
+                    </div>
+                    
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Completadas Hoy ({{ rutinas_completadas.count }})</h4>
+                    <div class="space-y-3">
+                        {% for reg in rutinas_completadas %}
+                        <div class="flex items-center gap-3 p-3 rounded-lg bg-gray-50/50 dark:bg-gray-800/30">
+                            <div class="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 flex items-center justify-center shrink-0">
+                                <i class="bi bi-check-all"></i>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-sm line-through text-gray-500">{{ reg.receta.titulo }}</p>
+                                <p class="text-[10px] text-gray-400 uppercase font-medium">Hecho por {{ reg.completada_por.first_name }} a las {{ reg.fecha_completada|time:"H:i" }}</p>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-xs text-gray-500 italic">No se han registrado tareas completadas aún.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="p-4 border-t bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border)">
+                    <button onclick="document.getElementById('modal-crear-rutina').classList.remove('hidden')" class="w-full py-2 rounded-lg border border-dashed text-sm font-medium hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2" style="color: var(--color-text); border-color: var(--color-border)">
+                        <i class="bi bi-plus-circle"></i> Nueva Tarea/Receta Diaria
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Personal Asignado -->
+            <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-sm" style="border-color: var(--color-border);">
+                <div class="px-6 py-5 border-b flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
+                    <h2 class="text-lg font-bold flex items-center gap-2" style="color: var(--color-text)">
+                        <i class="bi bi-people" style="color: var(--color-primary)"></i> Cuidados a cargo de
+                    </h2>
+                </div>
+                <div class="divide-y" style="border-color: var(--color-border);">
+                    {% for colab in colaboradores_actuales %}
+                    <div class="p-5 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-sm" style="background-color: var(--color-primary)">
+                                {{ colab.first_name|first }}{{ colab.last_name|first }}
+                            </div>
+                            <div>
+                                <p class="font-semibold text-sm" style="color: var(--color-text)">{{ colab.get_full_name }}</p>
+                                <p class="text-xs text-gray-500 mt-0.5">{{ colab.cargo.nombre|default:"Colaborador" }}</p>
+                            </div>
+                        </div>
+                        <form action="{% url 'pacientes:desvincular_colaborador_de_paciente' paciente.id colab.id %}" method="POST" onsubmit="return confirm('¿Seguro que deseas desvincular a este colaborador del paciente?');">
+                            {% csrf_token %}
+                            <button type="submit" class="text-red-500 opacity-50 hover:opacity-100 transition-opacity p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg" title="Desasignar">
+                                <i class="bi bi-person-dash text-lg"></i>
+                            </button>
+                        </form>
+                    </div>
+                    {% empty %}
+                    <div class="p-8 text-center text-gray-500">
+                        <i class="bi bi-emoji-smile text-3xl mb-2 text-gray-300 block"></i>
+                        <p class="text-sm">Este paciente no tiene cuidadores asignados.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="p-4 border-t bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border)">
+                    <button onclick="document.getElementById('modal-asignar-personal').classList.remove('hidden')" class="w-full py-2 rounded-lg border border-dashed text-sm font-medium hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2" style="color: var(--color-text); border-color: var(--color-border)">
+                        <i class="bi bi-person-plus"></i> Asignar Personal
+                    </button>
+                </div>
+            </div>
+            
+        </div>
+        
+    </div>
+</div>
+
+<!-- Modal Asignar Personal -->
+<div id="modal-asignar-personal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/50 fade-in" style="backdrop-filter: blur(4px);">
+    <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-lg max-w-md w-full mx-4 overflow-hidden" style="border-color: var(--color-border);">
+        <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
+            <h3 class="font-bold text-lg" style="color: var(--color-text)">Asignar Personal</h3>
+            <button onclick="document.getElementById('modal-asignar-personal').classList.add('hidden')" class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <form action="{% url 'pacientes:asignar_colaborador_a_paciente' paciente.id %}" method="POST">
+            {% csrf_token %}
+            <div class="p-6">
+
+
+                <p class="block text-sm font-medium mb-3" style="color: var(--color-text)">Buscar colaborador por Nombre o RUT:</p>
+                <div class="relative mb-4">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-400">
+                        <i class="bi bi-search"></i>
+                    </div>
+                    <input type="text" id="personalSearchInput" class="w-full rounded-xl border pl-11 pr-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-slate-700/50 transition-all shadow-inner" style="color: var(--color-text); border-color: var(--color-border)" placeholder="Ej. Juan Pérez o 12.345.678-9" autocomplete="off">
+                </div>
+
+                <div class="border rounded-xl overflow-hidden bg-gray-50/50 dark:bg-slate-700/30 max-h-56 overflow-y-auto" style="border-color: var(--color-border)">
+                    <input type="hidden" name="user_id" id="selectedPersonalId" required>
+                    <ul id="personalList" class="divide-y divide-gray-100 dark:divide-gray-700/50">
+                        {% for c in colaboradores_disponibles %}
+                        <li>
+                            <button type="button" class="personal-option w-full text-left px-5 py-3 border-l-4 border-transparent hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex flex-col focus:outline-none group" data-id="{{ c.id }}" data-search="{{ c.first_name|lower }} {{ c.last_name|lower }} {{ c.rut|lower }}">
+                                <span class="font-semibold text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" style="color: var(--color-text)">{{ c.get_full_name }}</span>
+                                <span class="text-xs text-gray-500 font-mono mt-0.5">RUT: {{ c.rut }} | {{ c.cargo.nombre|default:"Colaborador" }}</span>
+                            </button>
+                        </li>
+                        {% empty %}
+                        <li class="px-5 py-8 text-center text-sm text-gray-500">
+                            <i class="bi bi-check-circle text-2xl mb-2 text-green-500 block"></i>
+                            Todo el personal ya está asignado a este paciente.
+                        </li>
+                        {% endfor %}
+                        
+                        <li id="noPersonalResultsMsg" class="px-5 py-8 text-center text-sm text-gray-500 hidden">
+                            <i class="bi bi-search text-2xl mb-2 text-gray-400 block"></i>
+                            No se encontraron colaboradores con esa búsqueda.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t flex justify-end gap-3 bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
+                <button type="button" onclick="document.getElementById('modal-asignar-personal').classList.add('hidden')" class="px-4 py-2 rounded-lg border text-sm font-medium hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" style="color: var(--color-text); border-color: var(--color-border)">Cancelar</button>
+                <button type="submit" id="btnSubmitPersonal" disabled class="px-4 py-2 rounded-lg text-sm font-medium text-white shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed" style="background-color: var(--color-primary)">Asignar Selección</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Agregar Hito -->
+<div id="modal-agregar-hito" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/50 fade-in" style="backdrop-filter: blur(4px);">
+    <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-lg max-w-lg w-full mx-4 overflow-hidden" style="border-color: var(--color-border);">
+        <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
+            <h3 class="font-bold text-lg" style="color: var(--color-text)">Registrar Nuevo Hito Clínico</h3>
+            <button onclick="document.getElementById('modal-agregar-hito').classList.add('hidden')" class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <form action="{% url 'pacientes:agregar_hito_clinico' paciente.id %}" method="POST">
+            {% csrf_token %}
+            <div class="p-6">
+                <label class="block text-sm font-medium mb-2" style="color: var(--color-text)">Descripción del suceso o actualización:</label>
+                <textarea name="descripcion" rows="4" required class="w-full rounded-xl border px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-slate-700/50 shadow-inner resize-none mb-4" style="color: var(--color-text); border-color: var(--color-border)" placeholder="Describa el hito clínico detalladamente..."></textarea>
+                
+                <label class="block text-sm font-medium mb-2" style="color: var(--color-text)">Nivel de Importancia:</label>
+                <div class="grid grid-cols-3 gap-3">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="importancia" value="baja" class="peer sr-only" checked>
+                        <div class="text-center px-3 py-2 rounded-lg border text-sm font-medium peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all text-gray-500" style="border-color: var(--color-border)">Normal</div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="importancia" value="media" class="peer sr-only">
+                        <div class="text-center px-3 py-2 rounded-lg border text-sm font-medium peer-checked:bg-yellow-50 peer-checked:border-yellow-500 peer-checked:text-yellow-700 dark:peer-checked:bg-yellow-900/30 dark:peer-checked:text-yellow-400 transition-all text-gray-500" style="border-color: var(--color-border)">Atención</div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="importancia" value="alta" class="peer sr-only">
+                        <div class="text-center px-3 py-2 rounded-lg border text-sm font-medium peer-checked:bg-red-50 peer-checked:border-red-500 peer-checked:text-red-700 dark:peer-checked:bg-red-900/30 dark:peer-checked:text-red-400 transition-all text-gray-500" style="border-color: var(--color-border)">Crítico</div>
+                    </label>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t flex justify-end gap-3 bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
+                <button type="button" onclick="document.getElementById('modal-agregar-hito').classList.add('hidden')" class="px-4 py-2 rounded-lg border text-sm font-medium hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" style="color: var(--color-text); border-color: var(--color-border)">Cancelar</button>
+                <button type="submit" class="px-4 py-2 rounded-lg text-sm font-medium text-white shadow-sm hover:opacity-90" style="background-color: var(--color-primary)">Guardar Registro</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Nueva Rutina -->
+<div id="modal-crear-rutina" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/50 fade-in" style="backdrop-filter: blur(4px);">
+    <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-lg max-w-md w-full mx-4 overflow-hidden" style="border-color: var(--color-border);">
+        <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
+            <h3 class="font-bold text-lg" style="color: var(--color-text)">Nueva Tarea Diaria</h3>
+            <button onclick="document.getElementById('modal-crear-rutina').classList.add('hidden')" class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <form action="{% url 'pacientes:crear_receta_diaria' paciente.id %}" method="POST">
+            {% csrf_token %}
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1.5" style="color: var(--color-text)">Tarea o Medicina <span class="text-red-500">*</span></label>
+                    <input type="text" name="titulo" required class="w-full rounded-xl border px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-slate-700/50 shadow-inner" style="color: var(--color-text); border-color: var(--color-border)" placeholder="Ej. Dar Paracetamol 500mg">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-1.5" style="color: var(--color-text)">Colaborador a cargo</label>
+                    <select name="colaborador_id" class="w-full rounded-xl border px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-slate-700/50 shadow-inner text-sm" style="color: var(--color-text); border-color: var(--color-border)">
+                        <option value="">Cualquiera (Turno General)</option>
+                        {% for colab in colaboradores_actuales %}
+                            <option value="{{ colab.id }}">{{ colab.get_full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-1.5" style="color: var(--color-text)">Detalles o Instrucciones</label>
+                    <textarea name="detalles" rows="2" class="w-full rounded-xl border px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-slate-700/50 shadow-inner resize-none text-sm" style="color: var(--color-text); border-color: var(--color-border)" placeholder="Opcional..."></textarea>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t flex justify-end gap-3 bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
+                <button type="button" onclick="document.getElementById('modal-crear-rutina').classList.add('hidden')" class="px-4 py-2 rounded-lg border text-sm font-medium hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" style="color: var(--color-text); border-color: var(--color-border)">Cancelar</button>
+                <button type="submit" class="px-4 py-2 rounded-lg text-sm font-medium text-white shadow-sm hover:opacity-90" style="background-color: var(--color-primary)">Programar Diariamente</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Buscador interactivo de personal
+    const searchInput = document.getElementById('personalSearchInput');
+    const listItems = document.querySelectorAll('.personal-option');
+    const noResults = document.getElementById('noPersonalResultsMsg');
+    const hiddenInput = document.getElementById('selectedPersonalId');
+    const submitBtn = document.getElementById('btnSubmitPersonal');
+    
+    if(searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            const term = e.target.value.toLowerCase().trim();
+            let count = 0;
+            
+            listItems.forEach(item => {
+                const searchData = item.getAttribute('data-search');
+                if(searchData.includes(term)) {
+                    item.parentElement.style.display = '';
+                    count++;
+                } else {
+                    item.parentElement.style.display = 'none';
+                }
+            });
+            
+            if(count === 0 && listItems.length > 0) {
+                noResults.classList.remove('hidden');
+            } else {
+                noResults.classList.add('hidden');
+            }
+        });
+    }
+
+    listItems.forEach(item => {
+        item.addEventListener('click', function() {
+            // Limpiar
+            listItems.forEach(i => {
+                i.classList.remove('bg-blue-50', 'dark:bg-blue-900/30', 'border-blue-500');
+                i.classList.add('border-transparent');
+            });
+            
+            // Seleccionar
+            this.classList.remove('border-transparent');
+            this.classList.add('bg-blue-50', 'dark:bg-blue-900/30', 'border-blue-500');
+            
+            hiddenInput.value = this.getAttribute('data-id');
+            submitBtn.disabled = false;
+        });
+    });
+
+});
+</script>
+{% endblock %}

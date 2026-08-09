@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "env": {
+    "PYTHON_VERSION": "3.12",
+    "PIP_BREAK_SYSTEM_PACKAGES": "1"
+  }
+}

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Certificados - Kimün{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="text-sm mb-4" style="color: var(--color-text-secondary);">
+    <a href="{% url 'inicio' %}">Inicio</a>
+    <i class="bi bi-chevron-right text-xs mx-1"></i>
+    <span>Certificados</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold">Gestión de Certificados</h1>
+        <p class="mt-1" style="color: var(--color-text-secondary);">
+            Administra los certificados emitidos, aprueba los pendientes y revisa el progreso de los estudiantes.
+        </p>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="bg-gray-50 dark:bg-slate-800 rounded-xl p-5 mb-6 border border-gray-200 dark:border-gray-700">
+        <form method="get" class="flex flex-col gap-4">
+            <input type="hidden" name="tab" value="{{ tab }}">
+            
+            <!-- Fila 1 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div>
+                    <label class="block text-xs font-semibold mb-1" style="color: var(--color-text-secondary);">Buscar Alumno</label>
+                    <div class="relative">
+                        <i class="bi bi-search absolute left-3 top-2.5 text-gray-400"></i>
+                        <input type="text" name="q" value="{{ q }}" placeholder="Nombre o RUT..." class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-semibold mb-1" style="color: var(--color-text-secondary);">Curso</label>
+                    <select name="curso" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="">Todos los cursos</option>
+                        {% for c in cursos %}
+                        <option value="{{ c.id }}" {% if curso_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.titulo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-semibold mb-1" style="color: var(--color-text-secondary);">Cargo</label>
+                    <select name="cargo" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="">Todos los cargos</option>
+                        {% for c in cargos %}
+                        <option value="{{ c.id }}" {% if cargo_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Fila 2 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div>
+                    <label class="block text-xs font-semibold mb-1" style="color: var(--color-text-secondary);">Desde</label>
+                    <input type="date" name="fecha_desde" value="{{ fecha_desde }}" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1" style="color: var(--color-text-secondary);">Hasta</label>
+                    <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                
+                <div class="flex gap-2">
+                    <button type="submit" class="w-full py-2 rounded-lg font-medium text-white transition-colors text-sm flex items-center justify-center gap-1" style="background-color: var(--color-primary);">
+                        <i class="bi bi-funnel"></i> Filtrar
+                    </button>
+                    <a href="?tab={{ tab }}" class="py-2 px-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors text-sm flex items-center justify-center" title="Limpiar">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <!-- TABS -->
+    <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
+        <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" style="color: var(--color-text-secondary);">
+            <li class="mr-2">
+                <a href="?tab=aprobados{{ filter_params }}" class="inline-block p-4 border-b-2 rounded-t-lg transition-colors {% if tab == 'aprobados' %}border-blue-500 text-blue-600 dark:text-blue-500{% else %}border-transparent hover:border-gray-300 dark:hover:border-gray-300{% endif %}">
+                    <i class="bi bi-check-circle me-1"></i> Listos (Aprobados)
+                </a>
+            </li>
+            <li class="mr-2">
+                <a href="?tab=pendientes{{ filter_params }}" class="inline-block p-4 border-b-2 rounded-t-lg transition-colors {% if tab == 'pendientes' %}border-blue-500 text-blue-600 dark:text-blue-500{% else %}border-transparent hover:border-gray-300 dark:hover:border-gray-300{% endif %}">
+                    <i class="bi bi-hourglass-split me-1"></i> Pendientes de Aprobación
+                </a>
+            </li>
+            <li class="mr-2">
+                <a href="?tab=en_progreso{{ filter_params }}" class="inline-block p-4 border-b-2 rounded-t-lg transition-colors {% if tab == 'en_progreso' %}border-blue-500 text-blue-600 dark:text-blue-500{% else %}border-transparent hover:border-gray-300 dark:hover:border-gray-300{% endif %}">
+                    <i class="bi bi-play-circle me-1"></i> En Progreso
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    {% if items %}
+    <div class="grid gap-4">
+        {% for item in items %}
+        
+        {% if tab == 'aprobados' %}
+        <!-- VISTA APROBADOS -->
+        <div class="hybrid-card rounded-xl p-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-xl flex items-center justify-center text-2xl" 
+                         style="background-color: var(--color-purple-bg); color: var(--color-purple);">
+                        <i class="bi bi-award-fill"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold">{{ item.curso.titulo }}</h3>
+                        <p class="text-sm" style="color: var(--color-text-secondary);">
+                            <i class="bi bi-person me-1"></i>{{ item.usuario.get_full_name|default:item.usuario.username }}
+                        </p>
+                        <p class="text-xs" style="color: var(--color-text-secondary);">
+                            <i class="bi bi-calendar me-1"></i>{{ item.fecha_emision|date:"d M Y" }}
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="{% url 'certificados:descargar_certificado' pk=item.pk %}" 
+                       class="btn-outline px-4 py-2 rounded-lg font-medium border transition-colors hover:bg-gray-50 dark:hover:bg-slate-700">
+                        <i class="bi bi-download me-1"></i>Descargar
+                    </a>
+                    <form method="post" action="{% url 'certificados:eliminar_certificado' pk=item.pk %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="p-2 rounded-lg transition-colors hover:bg-red-100 dark:hover:bg-red-900" 
+                                onclick="return confirm('¿Eliminar este certificado?')" title="Eliminar">
+                            <i class="bi bi-trash text-red-500"></i>
+                        </button>
+                    </form>
+                    <span class="text-xs px-2 py-1 rounded font-mono" style="background-color: var(--color-success-bg); color: var(--color-success);">
+                        {{ item.codigo_verificacion|stringformat:"s"|slice:":8" }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        {% elif tab == 'pendientes' %}
+        <!-- VISTA PENDIENTES -->
+        <div class="hybrid-card rounded-xl p-6 flex justify-between items-center transition-all hover:shadow-md">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-400">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-lg">{{ item.curso.titulo }}</h3>
+                    <p class="text-sm" style="color: var(--color-text-secondary);">
+                        <i class="bi bi-person me-1"></i>{{ item.usuario.get_full_name|default:item.usuario.username }}
+                    </p>
+                    <p class="text-xs" style="color: var(--color-text-secondary);">
+                        <i class="bi bi-calendar me-1"></i>Generado el {{ item.fecha_emision|date:"d M Y" }}
+                    </p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <form method="post" action="{% url 'certificados:aprobar_certificado' pk=item.pk %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="px-4 py-2 rounded-lg font-medium text-white transition-colors" style="background-color: var(--color-primary);">
+                        <i class="bi bi-check2 me-1"></i> Aprobar
+                    </button>
+                </form>
+                
+                <form method="post" action="{% url 'certificados:rechazar_certificado' pk=item.pk %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="px-4 py-2 rounded-lg font-medium border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+                        <i class="bi bi-x-lg me-1"></i> Rechazar
+                    </button>
+                </form>
+                
+                <span class="text-xs px-2 py-1 rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-400">
+                    Pendiente
+                </span>
+            </div>
+        </div>
+
+        {% elif tab == 'en_progreso' %}
+        <!-- VISTA EN PROGRESO -->
+        <div class="hybrid-card rounded-xl p-6 flex justify-between items-center transition-all hover:shadow-md">
+            <div class="flex items-center gap-4 w-1/3">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400">
+                    <i class="bi bi-book"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-lg">{{ item.curso.titulo }}</h3>
+                    <p class="text-sm" style="color: var(--color-text-secondary);">
+                        <i class="bi bi-person me-1"></i>{{ item.usuario.get_full_name|default:item.usuario.username }}
+                    </p>
+                    <p class="text-xs" style="color: var(--color-text-secondary);">
+                        <i class="bi bi-calendar-event me-1"></i>Empezó el {{ item.fecha_asignacion|date:"d M Y" }}
+                    </p>
+                </div>
+            </div>
+            
+            <div class="w-1/3 flex flex-col items-center">
+                <div class="w-full flex justify-between text-xs font-semibold mb-1" style="color: var(--color-text-secondary);">
+                    <span>Progreso del Curso</span>
+                    <span>{{ item.progreso }}%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                    <div class="h-2.5 rounded-full transition-all duration-1000 ease-out" style="background-color: var(--color-primary); width: {{ item.progreso }}%"></div>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3 w-1/4 justify-end">
+                <span class="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-400 shadow-sm border border-blue-200 dark:border-blue-700">
+                    En Progreso
+                </span>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% endfor %}
+    </div>
+    
+    {% if page_obj.has_other_pages %}
+    <div class="flex justify-center items-center gap-2 mt-8">
+        {% if page_obj.has_previous %}
+        <a href="?tab={{ tab }}&page=1{{ filter_params }}" class="px-3 py-2 rounded-lg border hover:bg-gray-50" style="border-color: var(--color-border);">
+            <i class="bi bi-chevron-double-left"></i>
+        </a>
+        <a href="?tab={{ tab }}&page={{ page_obj.previous_page_number }}{{ filter_params }}" class="px-3 py-2 rounded-lg border hover:bg-gray-50" style="border-color: var(--color-border);">
+            <i class="bi bi-chevron-left"></i>
+        </a>
+        {% endif %}
+        
+        <span class="px-4 py-2" style="color: var(--color-text-secondary);">
+            Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+        </span>
+        
+        {% if page_obj.has_next %}
+        <a href="?tab={{ tab }}&page={{ page_obj.next_page_number }}{{ filter_params }}" class="px-3 py-2 rounded-lg border hover:bg-gray-50" style="border-color: var(--color-border);">
+            <i class="bi bi-chevron-right"></i>
+        </a>
+        <a href="?tab={{ tab }}&page={{ page_obj.paginator.num_pages }}{{ filter_params }}" class="px-3 py-2 rounded-lg border hover:bg-gray-50" style="border-color: var(--color-border);">
+            <i class="bi bi-chevron-double-right"></i>
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="text-center py-16">
+        <div class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style="background-color: var(--color-purple-bg);">
+            <i class="bi bi-inbox text-2xl" style="color: var(--color-purple);"></i>
+        </div>
+        <h3 class="text-xl font-medium">No hay registros en esta sección</h3>
+        <p class="mt-2" style="color: var(--color-text-secondary);">
+            {% if tab == 'aprobados' %}Aún no se han emitido certificados listos.{% elif tab == 'pendientes' %}No tienes certificados pendientes de aprobación.{% else %}No hay estudiantes en progreso en este momento.{% endif %}
+        </p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block title %}Clases - {{ curso.titulo }} - Kimün{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="text-sm mb-4" style="color: var(--color-text-secondary);">
+    <a href="{% url 'inicio' %}">Inicio</a>
+    <i class="bi bi-chevron-right text-xs mx-1"></i>
+    <a href="{% url 'cursos:curso_list' %}">Cursos</a>
+    <i class="bi bi-chevron-right text-xs mx-1"></i>
+    <a href="{% url 'cursos:curso_detail' pk=curso.id %}">{{ curso.titulo }}</a>
+    <i class="bi bi-chevron-right text-xs mx-1"></i>
+    <span>Contenido</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex justify-between items-start">
+        <div>
+            <a href="{% url 'cursos:curso_detail' pk=curso.id %}" class="text-sm mb-2 inline-block" style="color: var(--color-text-secondary);">
+                <i class="bi bi-arrow-left me-1"></i> Volver al curso
+            </a>
+            <h1 class="text-2xl font-bold" style="color: var(--color-text);">
+                <i class="bi bi-collection me-2" style="color: var(--color-primary);"></i>Contenido del Curso
+            </h1>
+            <p class="mt-1" style="color: var(--color-text-secondary);">
+                {{ curso.titulo }}
+            </p>
+        </div>
+        <div class="flex items-center gap-4">
+            {% if request.user.rol in 'admin,docente' %}
+            <div class="inline-flex items-center p-1 rounded-xl" style="background-color: var(--color-bg); border: 1px solid var(--color-border);">
+                <a href="?vista=edicion" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all {% if not simular_estudiante %}shadow-sm{% else %}opacity-60 hover:opacity-100{% endif %}"
+                   style="{% if not simular_estudiante %}background-color: var(--color-surface); color: var(--color-primary);{% else %}color: var(--color-text-secondary);{% endif %}">
+                    <i class="bi bi-pencil-square"></i> Modo Edición
+                </a>
+                <a href="?vista=estudiante" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all {% if simular_estudiante %}shadow-sm{% else %}opacity-60 hover:opacity-100{% endif %}"
+                   style="{% if simular_estudiante %}background-color: var(--color-surface); color: var(--color-primary);{% else %}color: var(--color-text-secondary);{% endif %}">
+                    <i class="bi bi-eye"></i> Vista Estudiante
+                </a>
+            </div>
+            {% endif %}
+            
+            {% if puede_editar %}
+            <a href="{% url 'cursos:clase_create' pk=curso.id %}" class="btn-primary px-4 py-2 rounded-xl text-sm whitespace-nowrap">
+                <i class="bi bi-plus-lg me-1"></i>Nueva Clase
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if contenido_con_estado %}
+<div class="space-y-4" id="contenido-list">
+    {% for ctx in contenido_con_estado %}
+    <div class="contenido-item flex items-center justify-between p-4 rounded-xl transition-opacity {% if ctx.bloqueado %}opacity-50{% endif %}" 
+         style="background-color: var(--color-bg); {% if puede_editar %}cursor: grab;{% endif %}"
+         data-id="{{ ctx.item.id }}" data-tipo="{% if ctx.is_clase %}clase{% else %}evaluacion{% endif %}">
+        <div class="flex items-center gap-4">
+            {% if puede_editar %}
+            <div class="drag-handle text-gray-400 hover:text-gray-600 px-2 cursor-grab text-xl" style="color: var(--color-text-secondary);">
+                <i class="bi bi-grip-vertical"></i>
+            </div>
+            {% endif %}
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold orden-badge"
+                 style="background-color: {% if ctx.completado %}var(--color-success){% elif ctx.is_clase %}var(--color-primary){% else %}var(--color-danger){% endif %}; color: white;">
+                 {% if ctx.bloqueado %}
+                 <i class="bi bi-lock-fill"></i>
+                 {% elif ctx.completado %}
+                 <i class="bi bi-check-lg"></i>
+                 {% else %}
+                     {{ ctx.item.orden }}
+                 {% endif %}
+            </div>
+            <div>
+                <span class="font-medium block" style="color: var(--color-text);">{{ ctx.item.titulo }}</span>
+                <span class="text-sm" style="color: var(--color-text-secondary);">
+                    {% if ctx.is_clase %}
+                    <i class="bi bi-file-text me-1"></i>Clase
+                    {% else %}
+                    <i class="bi bi-ui-checks me-1"></i>Evaluación
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            {% if puede_editar %}
+                {% if ctx.is_clase %}
+                <a href="{% url 'cursos:clase_edit' pk=ctx.item.id %}" class="w-10 h-10 flex items-center justify-center rounded-xl transition-colors hover:bg-gray-100" style="color: var(--color-primary);" title="Editar">
+                    <i class="bi bi-pencil-square text-lg"></i>
+                </a>
+                {% else %}
+                <a href="{% url 'evaluaciones:evaluacion_edit' pk=ctx.item.id %}" class="w-10 h-10 flex items-center justify-center rounded-xl transition-colors hover:bg-gray-100" style="color: var(--color-primary);" title="Editar">
+                    <i class="bi bi-pencil-square text-lg"></i>
+                </a>
+                {% endif %}
+            {% else %}
+                {% if ctx.bloqueado %}
+                <span class="px-4 py-2 rounded-xl text-sm font-medium" style="background-color: var(--color-border); color: var(--color-text-secondary);">
+                    <i class="bi bi-lock me-1"></i>Bloqueado
+                </span>
+                {% else %}
+                    {% if ctx.is_clase %}
+                    <a href="{% url 'cursos:clase_detail' ctx.item.id %}" class="btn-outline px-4 py-2 rounded-xl text-sm hover:bg-gray-50 transition-colors">
+                        <i class="bi bi-eye me-1"></i>Ver Contenido
+                    </a>
+                    {% else %}
+                    <a href="{% url 'evaluaciones:tomar_evaluacion' ctx.item.id %}" class="btn-outline px-4 py-2 rounded-xl text-sm hover:bg-gray-50 transition-colors">
+                        <i class="bi bi-pencil me-1"></i>Rendir
+                    </a>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="hybrid-card rounded-2xl p-8 text-center">
+    <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" 
+         style="background-color: var(--color-bg);">
+        <i class="bi bi-journal-text text-3xl" style="color: var(--color-text-secondary);"></i>
+    </div>
+    <h3 class="text-lg font-semibold mb-2" style="color: var(--color-text);">No hay clases creadas</h3>
+    <p class="mb-4" style="color: var(--color-text-secondary);">
+        {% if puede_editar %}Comienza agregando la primera clase al curso.{% else %}El docente aún no ha agregado clases.{% endif %}
+    </p>
+    {% if puede_editar %}
+    <a href="{% url 'cursos:clase_create' pk=curso.id %}" class="btn-primary px-6 py-3 rounded-xl inline-flex items-center gap-2">
+        <i class="bi bi-plus-lg"></i>Crear Primera Clase
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if puede_editar %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var el = document.getElementById('contenido-list');
+        if (el) {
+            var sortable = Sortable.create(el, {
+                handle: '.drag-handle',
+                animation: 150,
+                ghostClass: 'opacity-50',
+                onEnd: function (evt) {
+                    // Collect new order
+                    let items = [];
+                    document.querySelectorAll('.contenido-item').forEach((row, index) => {
+                        items.push({
+                            id: row.dataset.id,
+                            tipo: row.dataset.tipo,
+                            orden: index + 1
+                        });
+                        
+                        // Update UI numbers
+                        const badge = row.querySelector('.orden-badge');
+                        if(badge && !badge.querySelector('.bi-check-lg') && !badge.querySelector('.bi-lock-fill')) {
+                            badge.textContent = index + 1;
+                        }
+                    });
+
+                    // Send to server
+                    fetch(`{% url 'cursos:curso_reordenar' pk=curso.id %}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify(items)
+                    }).then(response => {
+                        if(!response.ok) {
+                            alert("Error al guardar el nuevo orden. Por favor recarga la página.");
+                        }
+                    }).catch(error => {
+                        console.error('Error:', error);
+                        alert("Error de conexión al reordenar.");
+                    });
+                },
+            });
+        }
+    });
+</script>
+{% endif %}
+
+{% endblock %}

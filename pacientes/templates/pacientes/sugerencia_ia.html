@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Sugerencia de IA - Kimün{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+    
+    <!-- Top Action Bar -->
+    <div class="flex items-center justify-between mb-4">
+        <a href="{% url 'pacientes:expediente_paciente' paciente.id %}" class="text-sm font-medium text-gray-500 hover:text-blue-600 inline-flex items-center gap-1 transition-colors">
+            <i class="bi bi-arrow-left"></i> Volver al Expediente
+        </a>
+    </div>
+
+    <!-- Contenido Principal -->
+    {% if resultado_ia.error %}
+    <!-- Error -->
+    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-6 rounded-xl flex items-start gap-4 shadow-sm">
+        <i class="bi bi-exclamation-triangle-fill text-2xl"></i>
+        <div>
+            <h3 class="font-bold text-lg mb-1">No pudimos generar la sugerencia</h3>
+            <p>{{ resultado_ia.error }}</p>
+            <p class="text-sm mt-2 font-medium opacity-80">Si eres administrador, revisa la configuración del archivo .env y los permisos de la API Key.</p>
+        </div>
+    </div>
+    {% else %}
+    
+    <!-- DASHBOARD AZUL OSCURO -->
+    <div class="bg-[#1a365d] text-white rounded-2xl p-8 shadow-lg relative overflow-hidden">
+        <!-- Decoración de fondo -->
+        <div class="absolute top-0 right-0 opacity-10 pointer-events-none">
+            <i class="bi bi-stars text-[15rem] leading-none absolute -top-10 -right-10"></i>
+        </div>
+        
+        <div class="relative z-10">
+            <!-- Badge de Análisis -->
+            <div class="inline-flex items-center gap-2 bg-[#2d4a77] border border-[#3e5f8f] px-3 py-1 rounded-full text-xs font-bold tracking-wide mb-6 text-yellow-400 shadow-sm">
+                <i class="bi bi-robot"></i> ANÁLISIS CLÍNICO GERONTOLÓGICO
+            </div>
+            
+            <h2 class="text-xl font-bold tracking-wide mb-3">RESUMEN CLÍNICO DEL CASO</h2>
+            <p class="text-[#cbd5e1] text-sm leading-relaxed mb-8">
+                {{ resultado_ia.resumen_caso }}
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Habilidades Sugeridas -->
+                <div class="bg-[#122746] border border-[#2d4a77] rounded-xl p-5 shadow-inner">
+                    <h3 class="text-[#94a3b8] font-bold text-xs tracking-wider mb-4">HABILIDADES CLÍNICAS SUGERIDAS</h3>
+                    <ul class="space-y-2.5">
+                        {% for habilidad in resultado_ia.habilidades_sugeridas %}
+                        <li class="flex items-start gap-2.5 text-sm text-[#e2e8f0]">
+                            <div class="w-1.5 h-1.5 rounded-full bg-white mt-1.5 shrink-0 shadow-[0_0_8px_rgba(255,255,255,0.8)]"></div>
+                            {{ habilidad }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                
+                <!-- Certificaciones Requeridas -->
+                <div class="bg-[#122746] border border-[#2d4a77] rounded-xl p-5 shadow-inner">
+                    <h3 class="text-[#94a3b8] font-bold text-xs tracking-wider mb-4">CERTIFICACIONES CRÍTICAS REQUERIDAS</h3>
+                    <ul class="space-y-3">
+                        {% for cert in resultado_ia.certificaciones_requeridas %}
+                        <li class="flex items-start gap-2.5 text-sm font-semibold text-yellow-400">
+                            <i class="bi bi-award shrink-0"></i>
+                            {{ cert }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- TÍTULO DE RECOMENDACIONES -->
+    <div class="flex items-center gap-3 mt-10 mb-4 px-2">
+        <i class="bi bi-caret-right-fill text-gray-400 text-xs"></i>
+        <h3 class="font-bold text-sm text-gray-400 tracking-wider uppercase">Recomendaciones de personal por match rate</h3>
+    </div>
+    
+    <div class="space-y-4 pb-12">
+        {% for recomendacion in resultado_ia.recomendaciones %}
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border shadow-sm p-6 flex flex-col md:flex-row items-center gap-6 hover:shadow-md transition-shadow relative overflow-hidden" style="border-color: var(--color-border);">
+            
+            {% if forloop.first %}
+            <!-- Borde superior dorado para el #1 -->
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 to-yellow-600"></div>
+            {% endif %}
+            
+            <!-- Avatar -->
+            <div class="shrink-0">
+                <div class="w-16 h-16 rounded-full flex items-center justify-center font-bold text-2xl text-white shadow-md bg-gradient-to-br from-[#1a365d] to-[#2d4a77] border-2 border-white dark:border-slate-800">
+                    {{ recomendacion.nombre|first }}
+                </div>
+            </div>
+            
+            <!-- Info principal -->
+            <div class="flex-1 text-center md:text-left">
+                <div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 mb-1.5">
+                    <h4 class="font-bold text-lg text-gray-900 dark:text-white">{{ recomendacion.nombre }}</h4>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                        {{ recomendacion.cargo }}
+                    </span>
+                </div>
+                
+                <p class="text-sm text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
+                    {{ recomendacion.justificacion }}
+                </p>
+                
+                <div class="flex flex-wrap gap-2 justify-center md:justify-start">
+                    {% for cert_cumplida in recomendacion.certificaciones_cumplidas %}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800/30 shadow-sm">
+                        <i class="bi bi-check-circle text-emerald-500"></i> {{ cert_cumplida }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Derecha: Match Rate & Button -->
+            <div class="shrink-0 flex flex-col items-center justify-center border-t md:border-t-0 md:border-l border-gray-100 dark:border-gray-700 pt-5 md:pt-0 md:pl-6 w-full md:w-48">
+                <div class="text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+                    {{ recomendacion.match_rate }}%
+                </div>
+                <div class="text-[10px] font-bold text-gray-400 tracking-widest uppercase mb-4">
+                    Compatibilidad
+                </div>
+                
+                <form action="{% url 'pacientes:sugerencia_ia' paciente.id %}" method="POST" class="w-full">
+                    {% csrf_token %}
+                    <input type="hidden" name="colaborador_id" value="{{ recomendacion.id_colaborador }}">
+                    <button type="submit" class="w-full py-2.5 rounded-lg bg-[#1a365d] hover:bg-[#122746] text-white font-bold text-sm transition-colors shadow-sm flex items-center justify-center gap-2">
+                        Asignar Paciente <i class="bi bi-arrow-right"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% empty %}
+        <div class="p-8 text-center text-gray-500 border rounded-xl border-dashed">
+            No se encontraron cuidadores disponibles.
+        </div>
+        {% endfor %}
+    </div>
+    
+    {% endif %}
+</div>
+{% endblock %}

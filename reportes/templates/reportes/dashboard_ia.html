@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}Análisis Institucional - Kimün{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-8 pb-10">
+    
+    <!-- Top Header -->
+    <div class="flex items-center gap-3 border-b pb-4" style="border-color: var(--color-border);">
+        <div class="w-12 h-12 rounded-xl bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-200 flex items-center justify-center text-2xl shadow-sm border" style="border-color: var(--color-border);">
+            <i class="bi bi-graph-up-arrow"></i>
+        </div>
+        <div>
+            <h1 class="text-2xl font-black" style="color: var(--color-text);">Análisis Institucional de Capacitaciones</h1>
+            <p class="text-gray-500 text-sm mt-0.5">Diagnóstico global de brechas de habilidades basado en los requerimientos actuales.</p>
+        </div>
+        {% if tipo_seleccionado %}
+        <div class="ml-auto">
+            <a href="{% url 'reportes:dashboard_ia' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-sm font-medium transition-colors" style="color: var(--color-text);">
+                <i class="bi bi-arrow-left"></i> Volver al menú
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Menú de Selección -->
+    {% if not tipo_seleccionado %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+        
+        <!-- Opción 0: Asignación de Paciente -->
+        <div class="bg-white dark:bg-slate-800 border rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all flex flex-col items-center text-center group cursor-pointer" style="border-color: var(--color-border);" onclick="window.location.href='?tipo=pacientes'">
+            <div class="w-20 h-20 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 flex items-center justify-center text-4xl mb-6 group-hover:scale-110 transition-transform">
+                <i class="bi bi-person-heart"></i>
+            </div>
+            <h2 class="text-xl font-bold mb-2 text-gray-900 dark:text-white">Asignación Inteligente de Pacientes</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 flex-1">
+                Utiliza la IA para buscar y asignar automáticamente el mejor cuidador o especialista para cada residente, basándose en su perfil clínico.
+            </p>
+            <button class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm w-full transition-colors flex items-center justify-center gap-2">
+                Ver Lista de Pacientes <i class="bi bi-list-check"></i>
+            </button>
+        </div>
+        
+        <!-- Opción 1: Upskilling -->
+        <div class="bg-white dark:bg-slate-800 border rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all flex flex-col items-center text-center group cursor-pointer" style="border-color: var(--color-border);" onclick="window.location.href='?tipo=upskilling'">
+            <div class="w-20 h-20 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-500 flex items-center justify-center text-4xl mb-6 group-hover:scale-110 transition-transform">
+                <i class="bi bi-person-fill-up"></i>
+            </div>
+            <h2 class="text-xl font-bold mb-2 text-gray-900 dark:text-white">Análisis de Asignación (Upskilling)</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 flex-1">
+                Descubre qué colaboradores deberías inscribir en los cursos que <strong>ya existen</strong> en el catálogo, basándote en las patologías de los pacientes actuales.
+            </p>
+            <button class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm w-full transition-colors flex items-center justify-center gap-2">
+                Ejecutar Análisis <i class="bi bi-magic"></i>
+            </button>
+        </div>
+        
+        <!-- Opción 2: Nuevos Cursos -->
+        <div class="bg-white dark:bg-slate-800 border rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all flex flex-col items-center text-center group cursor-pointer" style="border-color: var(--color-border);" onclick="window.location.href='?tipo=nuevos_cursos'">
+            <div class="w-20 h-20 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-500 flex items-center justify-center text-4xl mb-6 group-hover:scale-110 transition-transform">
+                <i class="bi bi-node-plus-fill"></i>
+            </div>
+            <h2 class="text-xl font-bold mb-2 text-gray-900 dark:text-white">Análisis de Cursos Faltantes</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 flex-1">
+                Descubre qué habilidades críticas <strong>faltan totalmente</strong> en tu catálogo actual de cursos frente a la demanda clínica, y obtén sugerencias de creación.
+            </p>
+            <button class="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm w-full transition-colors flex items-center justify-center gap-2">
+                Ejecutar Análisis <i class="bi bi-magic"></i>
+            </button>
+        </div>
+        
+    </div>
+    {% endif %}
+
+    <!-- Resultados -->
+    {% if tipo_seleccionado %}
+        
+        <!-- Loading State con AlpineJS (solo para los que llaman a la IA) -->
+        {% if tipo_seleccionado != 'pacientes' %}
+        <div x-data="{ loading: true }" x-init="setTimeout(() => loading = false, 100)">
+            
+            {% if resultado_ia.error %}
+            <!-- Error -->
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-6 rounded-xl flex items-start gap-4 shadow-sm">
+                <i class="bi bi-exclamation-triangle-fill text-2xl"></i>
+                <div>
+                    <h3 class="font-bold text-lg mb-1">Error de conexión</h3>
+                    <p>{{ resultado_ia.error }}</p>
+                </div>
+            </div>
+            {% else %}
+            
+            <!-- Resumen Narrativo Gerencial -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 md:p-8 shadow-sm border mb-8 flex flex-col md:flex-row gap-6 items-start" style="border-color: var(--color-border);">
+                
+                <div class="shrink-0 pt-1 hidden md:block">
+                    <div class="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-900/50 text-slate-400 dark:text-slate-500 flex items-center justify-center text-2xl border" style="border-color: var(--color-border);">
+                        <i class="bi bi-file-earmark-medical"></i>
+                    </div>
+                </div>
+                
+                <div class="flex-1">
+                    <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">Diagnóstico Ejecutivo</h2>
+                    <div class="text-base md:text-lg text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                        {{ resultado_ia.resumen_general }}
+                    </div>
+                </div>
+                
+            </div>
+            
+            <!-- RESULTADOS DEPENDIENDO DEL TIPO -->
+            {% if tipo_seleccionado == 'upskilling' %}
+            
+            <!-- PANEL A: UPSKILLING -->
+            <div class="space-y-4 max-w-3xl mx-auto">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="bi bi-person-fill-up text-blue-500 text-xl"></i>
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">Sugerencias de Asignación</h3>
+                </div>
+                <p class="text-sm text-gray-500 mb-4">Colaboradores que deberían ser inscritos en cursos existentes del catálogo.</p>
+                
+                <div class="space-y-4">
+                    {% for ups in resultado_ia.upskilling %}
+                    <div class="bg-white dark:bg-slate-800 border rounded-xl p-5 shadow-sm" style="border-color: var(--color-border);">
+                        
+                        <div class="mb-4">
+                            <span class="inline-flex px-3 py-1 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg text-sm font-bold border border-blue-200 dark:border-blue-800 mb-2">
+                                <i class="bi bi-journal-bookmark me-2"></i> {{ ups.curso_existente }}
+                            </span>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed pl-1">
+                                {{ ups.justificacion }}
+                            </p>
+                        </div>
+                        
+                        <!-- Colaboradores Sugeridos por el Sistema -->
+                        <div class="mt-4 pt-4 border-t border-dashed" style="border-color: var(--color-border);">
+                            <p class="text-xs font-bold text-gray-500 uppercase mb-3">
+                                Candidatos ideales (Menor carga académica)
+                            </p>
+                            
+                            <div class="space-y-2">
+                                {% for colab in ups.colaboradores_sugeridos %}
+                                <div class="flex items-center justify-between bg-gray-50 dark:bg-slate-700/50 rounded-lg p-3 border" style="border-color: var(--color-border);">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
+                                            {{ colab.nombres|slice:":1" }}{{ colab.apellidos|slice:":1" }}
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-bold text-gray-800 dark:text-gray-200 leading-none mb-1">{{ colab.get_full_name }}</p>
+                                            <p class="text-xs text-gray-500">{{ colab.cargo.nombre|default:"Sin cargo" }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-xs font-medium px-2 py-1 bg-white dark:bg-slate-800 border rounded-md shadow-sm">
+                                            {{ colab.cursos_pendientes }} curso(s) pendiente(s)
+                                        </span>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="text-sm text-gray-500 text-center py-2">
+                                    No hay colaboradores disponibles para asignar (todos tienen este curso).
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                    </div>
+                    {% empty %}
+                    <div class="p-6 text-center text-gray-500 border border-dashed rounded-xl" style="border-color: var(--color-border);">
+                        El personal actual ya posee todas las capacitaciones sugeridas del catálogo.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            {% elif tipo_seleccionado == 'nuevos_cursos' %}
+            
+            <!-- PANEL B: NUEVOS CURSOS -->
+            <div class="space-y-4 max-w-3xl mx-auto">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="bi bi-node-plus-fill text-amber-500 text-xl"></i>
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">Cursos Faltantes Sugeridos</h3>
+                </div>
+                <p class="text-sm text-gray-500 mb-4">Vacíos de conocimiento detectados que requieren creación de nuevos contenidos.</p>
+                
+                <div class="space-y-4">
+                    {% for nc in resultado_ia.nuevos_cursos %}
+                    <div class="bg-gradient-to-br from-amber-50 to-white dark:from-slate-800 dark:to-slate-800 border rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden" style="border-color: rgba(245, 158, 11, 0.2);">
+                        <!-- Cinta lateral -->
+                        <div class="absolute top-0 left-0 w-1 h-full bg-amber-400"></div>
+                        
+                        <h4 class="font-bold text-gray-900 dark:text-white mb-1 pl-2">{{ nc.titulo_sugerido }}</h4>
+                        <p class="text-xs text-amber-600 dark:text-amber-400 font-semibold uppercase tracking-wider mb-3 pl-2">
+                            Brecha: {{ nc.habilidad_faltante }}
+                        </p>
+                        
+                        <div class="bg-white/50 dark:bg-slate-900/50 rounded-lg p-3 text-sm text-gray-600 dark:text-gray-300 leading-relaxed mt-2 border border-amber-100 dark:border-amber-900/30">
+                            {{ nc.justificacion }}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="p-6 text-center text-gray-500 border border-dashed rounded-xl" style="border-color: var(--color-border);">
+                        No se detectaron brechas graves de capacitación para crear.
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="mt-6 pt-4 border-t" style="border-color: var(--color-border);">
+                    <a href="{% url 'cursos:curso_list' %}" class="w-full inline-flex justify-center items-center gap-2 py-3 px-4 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-800 dark:bg-amber-900/30 dark:hover:bg-amber-900/50 dark:text-amber-300 text-sm font-bold transition-colors">
+                        <i class="bi bi-plus-circle"></i> Ir al Creador de Cursos
+                    </a>
+                </div>
+            </div>
+            
+            {% endif %} <!-- Fin ifs de IA (upskilling/nuevos_cursos) -->
+            
+            {% endif %} <!-- Fin if resultado_ia.error -->
+            
+        </div>
+        {% endif %} <!-- Fin if tipo_seleccionado != 'pacientes' -->
+            
+            {% if tipo_seleccionado == 'pacientes' %}
+            
+            <!-- PANEL C: LISTA DE PACIENTES -->
+            <div class="space-y-4 max-w-4xl mx-auto">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <i class="bi bi-person-heart text-emerald-500 text-xl"></i>
+                        <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">Selecciona un paciente para asignar cuidador con IA</h3>
+                    </div>
+                    <!-- Buscador -->
+                    <div class="relative w-64">
+                        <i class="bi bi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="searchInput" onkeyup="filterPatients()" placeholder="Buscar por Nombre o RUT..." class="w-full pl-10 pr-4 py-2 border rounded-xl text-sm focus:ring-emerald-500 focus:border-emerald-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white" style="border-color: var(--color-border);">
+                    </div>
+                </div>
+                
+                <div class="flex flex-col gap-3" id="patientsList">
+                    {% for p in pacientes %}
+                    <div class="patient-card bg-white dark:bg-slate-800 border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow flex items-center justify-between" style="border-color: var(--color-border);" data-search="{{ p.nombre_completo|lower }} {{ p.rut|lower }}">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-1">
+                                <h4 class="font-bold text-lg text-gray-900 dark:text-white">{{ p.nombre_completo }}</h4>
+                                <span class="text-xs text-gray-500 font-mono bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded">{{ p.rut }}</span>
+                                <span class="px-2 py-0.5 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded text-xs font-bold border border-blue-200 dark:border-blue-800">
+                                    Dep: {{ p.get_nivel_dependencia_display }}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-1">
+                                <i class="bi bi-clipboard2-pulse text-gray-400 me-1"></i>
+                                {{ p.patologias|default:"Sin patologías registradas." }}
+                            </p>
+                        </div>
+                        
+                        <div class="ml-4 shrink-0">
+                            <a href="{% url 'pacientes:sugerencia_ia' p.id %}" class="inline-flex justify-center items-center gap-2 py-2 px-4 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 dark:text-emerald-300 text-sm font-bold transition-colors">
+                                <i class="bi bi-robot"></i> Asignar
+                            </a>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="p-6 text-center text-gray-500 border border-dashed rounded-xl" style="border-color: var(--color-border);">
+                        No hay pacientes registrados en el sistema.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            {% endif %}
+            
+        </div>
+    {% endif %}
+</div>
+
+<!-- Script para el loading manual de clics en las tarjetas -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const cards = document.querySelectorAll('.cursor-pointer');
+        cards.forEach(card => {
+            card.addEventListener('click', function(e) {
+                // Prevenir múltiples clics
+                if (this.classList.contains('opacity-50')) return;
+                
+                // Efecto de carga en la tarjeta
+                this.classList.add('opacity-50', 'pointer-events-none');
+                const btn = this.querySelector('button');
+                if(btn) {
+                    btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin"></i> Analizando...';
+                }
+            });
+        });
+    });
+
+    // Función de filtrado para pacientes
+    function filterPatients() {
+        let input = document.getElementById('searchInput').value.toLowerCase();
+        let cards = document.querySelectorAll('.patient-card');
+        
+        cards.forEach(card => {
+            let searchData = card.getAttribute('data-search');
+            if (searchData.includes(input)) {
+                card.style.display = "";
+            } else {
+                card.style.display = "none";
+            }
+        });
+    }
+</script>
+{% endblock %}
