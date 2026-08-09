@@ -51,7 +51,12 @@ def expediente_colaborador(request, user_id):
     ).order_by('orden_estado', '-fecha_asignacion')
     
     # Obtener límite de pacientes real
-    limite_actual = colaborador.limite_pacientes_personalizado if colaborador.limite_pacientes_personalizado is not None else colaborador.cargo.limite_pacientes
+    if colaborador.limite_pacientes_personalizado is not None:
+        limite_actual = colaborador.limite_pacientes_personalizado
+    elif colaborador.cargo:
+        limite_actual = colaborador.cargo.limite_pacientes
+    else:
+        limite_actual = 0
     pacientes_actuales = colaborador.pacientes_asignados.all()
     pacientes_disponibles = Paciente.objects.exclude(colaboradores=colaborador).order_by('nombre_completo')
     
