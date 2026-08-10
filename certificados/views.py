@@ -187,8 +187,7 @@ def generar_certificado(request, curso_pk):
         
         Certificado.objects.create(
             usuario=request.user,
-            curso=curso,
-            archivo_pdf=ContentFile(pdf_file)
+            curso=curso
         )
         
         for inscripcion in InscripcionCurso.objects.filter(curso=curso):
@@ -227,34 +226,27 @@ def descargar_certificado(request, pk):
         messages.error(request, 'El certificado aún no ha sido aprobado.')
         return redirect('certificados:mis_certificados')
     
-    # Lazy PDF generation: create PDF on first download if it doesn't exist
-    if not certificado.archivo_pdf:
-        from django.utils import timezone
-        
-        fecha_str = timezone.now().strftime('%d de %B de %Y')
-        buffer = BytesIO()
-        p = canvas.Canvas(buffer, pagesize=letter)
-        width, height = letter
-        
-        p.setFont("Helvetica-Bold", 24)
-        p.drawCentredString(width / 2, height - 100, "CERTIFICADO DE FINALIZACIÓN")
-        
-        p.setFont("Helvetica", 16)
-        p.drawCentredString(width / 2, height - 160, f"Otorgado a: {certificado.usuario.get_full_name() or certificado.usuario.username}")
-        p.drawCentredString(width / 2, height - 200, f"Por completar el curso: {certificado.curso.titulo}")
-        p.drawCentredString(width / 2, height - 240, f"Fecha: {fecha_str}")
-        
-        p.showPage()
-        p.save()
-        buffer.seek(0)
-        certificado.archivo_pdf.save(
-            f'certificado_{certificado.pk}.pdf',
-            ContentFile(buffer.getvalue())
-        )
-        buffer.close()
+    # On Vercel, the filesystem is Read-Only, so we generate the PDF dynamically in memory
+    from django.utils import timezone
     
-    certificado.archivo_pdf.seek(0)
-    return FileResponse(certificado.archivo_pdf, content_type='application/pdf')
+    fecha_str = timezone.now().strftime('%d de %B de %Y')
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+    
+    p.setFont("Helvetica-Bold", 24)
+    p.drawCentredString(width / 2, height - 100, "CERTIFICADO DE FINALIZACIÓN")
+    
+    p.setFont("Helvetica", 16)
+    p.drawCentredString(width / 2, height - 160, f"Otorgado a: {certificado.usuario.get_full_name() or certificado.usuario.username}")
+    p.drawCentredString(width / 2, height - 200, f"Por completar el curso: {certificado.curso.titulo}")
+    p.drawCentredString(width / 2, height - 240, f"Fecha: {fecha_str}")
+    
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+    
+    return FileResponse(buffer, as_attachment=True, filename=f'certificado_{certificado.pk}.pdf', content_type='application/pdf')
 
 
 @login_required
