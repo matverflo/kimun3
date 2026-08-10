@@ -43,9 +43,16 @@
                 <i class="bi bi-eye"></i> Vista Estudiante
             </a>
         </div>
-        <a href="{% url 'cursos:curso_gestion' curso.pk %}" class="btn-primary px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm">
-            <i class="bi bi-people-fill me-1"></i> Administrar Curso
-        </a>
+        <div class="flex gap-2">
+            {% if curso.estado == 'borrador' %}
+            <a href="{% url 'cursos:curso_publish' curso.pk %}" class="btn-success px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm" style="background-color: var(--color-success); color: white;">
+                <i class="bi bi-rocket-takeoff me-1"></i> Publicar Curso
+            </a>
+            {% endif %}
+            <a href="{% url 'cursos:curso_gestion' curso.pk %}" class="btn-primary px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm">
+                <i class="bi bi-people-fill me-1"></i> Administrar Curso
+            </a>
+        </div>
     </div>
     {% endif %}
 </div>
@@ -103,13 +110,28 @@
                     </div>
                     <div>
                         <h3 class="text-sm font-semibold" style="color: var(--color-text-secondary);">Tiempo Invertido</h3>
-                        <p class="text-2xl font-bold" style="color: var(--color-text);">{{ tiempo_invertido_minutos }}m <span class="text-base font-normal opacity-60">/ {% if curso.duracion_minutos %}{{ curso.duracion_minutos }}m{% else %}N/A{% endif %}</span></p>
+                        <p class="text-2xl font-bold" style="color: var(--color-text);">
+                            {{ tiempo_invertido_minutos }}m
+                            {% if curso.exige_tiempo_minimo %}
+                                {% if curso.horas_exigidas %}
+                                <span class="text-base font-normal opacity-60">/ {{ curso.horas_exigidas }}h</span>
+                                {% elif curso.duracion_minutos %}
+                                <span class="text-base font-normal opacity-60">/ {{ curso.duracion_minutos }}m</span>
+                                {% endif %}
+                            {% endif %}
+                        </p>
                     </div>
                 </div>
-                {% if curso.duracion_minutos %}
-                <div class="w-full h-2 rounded-full relative z-10" style="background-color: var(--color-border);">
-                    <div class="h-full rounded-full transition-all duration-1000 ease-out" style="width: {{ tiempo_progress }}%; background-color: var(--color-warning);"></div>
-                </div>
+                {% if curso.exige_tiempo_minimo %}
+                    {% if curso.horas_exigidas %}
+                    <div class="w-full h-2 rounded-full relative z-10" style="background-color: var(--color-border);">
+                        <div class="h-full rounded-full transition-all duration-1000 ease-out" style="width: {{ tiempo_progress }}%; max-width: 100%; background-color: var(--color-warning);"></div>
+                    </div>
+                    {% elif curso.duracion_minutos %}
+                    <div class="w-full h-2 rounded-full relative z-10" style="background-color: var(--color-border);">
+                        <div class="h-full rounded-full transition-all duration-1000 ease-out" style="width: {{ tiempo_progress }}%; max-width: 100%; background-color: var(--color-warning);"></div>
+                    </div>
+                    {% endif %}
                 {% endif %}
             </div>
         </div>
@@ -129,7 +151,7 @@
                              <i class="bi bi-hourglass-split text-xl"></i> Certificado Pendiente de Aprobación
                          </span>
                      {% elif certificado.estado == 'aprobado' %}
-                         <a href="{% url 'certificados:certificado_list' %}" class="px-6 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-md hover:-translate-y-0.5 transition-transform" style="background-color: var(--color-success); color: white;">
+                         <a href="{% url 'certificados:mis_certificados' %}" class="px-6 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-md hover:-translate-y-0.5 transition-transform" style="background-color: var(--color-success); color: white;">
                              <i class="bi bi-award-fill text-xl"></i> Ver mis Certificados
                          </a>
                          {% if certificado.archivo_pdf %}
@@ -180,14 +202,10 @@
                 <span class="text-sm" style="color: var(--color-text-secondary);">
                     <i class="bi bi-person me-1"></i>Instructor: {{ curso.docente_creador.get_full_name|default:curso.docente_creador.username }}
                 </span>
-                {% if curso.fecha_limite %}
-                <span class="text-sm" style="{% if curso.fecha_limite < now %}color: var(--color-danger); font-weight: 600;{% else %}color: var(--color-warning);{% endif %}">
-                    <i class="bi bi-calendar-event me-1"></i>
-                    {% if curso.fecha_limite < now %}
-                    Vencido: {{ curso.fecha_limite|date:"d M Y" }}
-                    {% else %}
-                    Fecha límite: {{ curso.fecha_limite|date:"d M Y" }}
-                    {% endif %}
+                {% if curso.semanas_estimadas > 0 %}
+                <span class="text-sm font-semibold" style="color: var(--color-info);">
+                    <i class="bi bi-clock-history me-1"></i>
+                    Duración: {{ curso.semanas_estimadas }} semanas
                 </span>
                 {% endif %}
             </div>

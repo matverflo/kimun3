@@ -22,12 +22,17 @@ def check_curso_completed(usuario, curso):
         if aprobadas < total_evals:
             return False, "Faltan evaluaciones por aprobar"
 
-    # 3. (Comentado por solicitud del cliente) Verificar tiempo invertido
-    # tiempo_invertido_minutos = get_tiempo_invertido_minutos(usuario, curso)
-    #         
-    # if curso.duracion_minutos and tiempo_invertido_minutos < curso.duracion_minutos:
-    #     minutos_faltantes = curso.duracion_minutos - tiempo_invertido_minutos
-    #     return False, f"Has completado el material, pero te faltan {minutos_faltantes} minutos de estudio exigidos por el curso. ¡Repasa un poco más el contenido!"
+    # 3. Verificar tiempo mínimo (si el profesor lo exige)
+    inscripcion = InscripcionCurso.objects.filter(usuario=usuario, curso=curso).first()
+    if not inscripcion:
+        return False, "No estás inscrito en este curso"
+        
+    if curso.exige_tiempo_minimo and curso.horas_exigidas > 0 and inscripcion.fecha_inicio_real:
+        from datetime import timedelta
+        tiempo_requerido = inscripcion.fecha_inicio_real + timedelta(hours=curso.horas_exigidas)
+        if timezone.now() < tiempo_requerido:
+            horas_restantes = (tiempo_requerido - timezone.now()).total_seconds() / 3600
+            return False, f"El curso exige un tiempo mínimo. Podrás completarlo en {int(horas_restantes)} horas."
 
     # Si pasa todo, marcamos como completado y generamos certificado
     inscripcion = InscripcionCurso.objects.filter(usuario=usuario, curso=curso).first()

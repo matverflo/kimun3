@@ -27,18 +27,7 @@ def crear_eventos_curso(sender, instance, created, **kwargs):
             color='#22c55e'
         )
     
-    if instance.fecha_limite:
-        EventoCalendarioModel.objects.filter(curso=instance, tipo=TipoEvento.CURSO_END).delete()
-        EventoCalendarioModel.objects.create(
-            titulo=f"Fecha límite: {instance.titulo}",
-            descripcion=f"Fecha límite para completar el curso '{instance.titulo}'",
-            tipo=TipoEvento.CURSO_END,
-            fecha_inicio=instance.fecha_limite,
-            fecha_fin=instance.fecha_limite,
-            curso=instance,
-            creado_por=instance.docente_creador,
-            color='#ef4444'
-        )
+    # El evento CURSO_END global se eliminó porque ahora las fechas límite son por alumno
 
 
 @receiver(post_delete, sender=Curso)
@@ -55,7 +44,7 @@ def crear_evento_evaluacion(sender, instance, created, **kwargs):
     if created:
         from django.utils import timezone
         from datetime import timedelta
-        fecha_limite = instance.curso.fecha_limite or (timezone.now() + timedelta(days=7))
+        fecha_limite = (timezone.now() + timedelta(weeks=instance.curso.semanas_estimadas)) if instance.curso.semanas_estimadas > 0 else (timezone.now() + timedelta(days=7))
         
         EventoCalendarioModel.objects.create(
             titulo=f"Evaluación: {instance.titulo}",

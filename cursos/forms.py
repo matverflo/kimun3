@@ -6,7 +6,7 @@ from .models import Curso, Material, Categoria, Clase
 class CursoForm(forms.ModelForm):
     class Meta:
         model = Curso
-        fields = ['titulo', 'descripcion', 'categoria', 'estado', 'fecha_limite', 'duracion_minutos']
+        fields = ['titulo', 'descripcion', 'categoria', 'estado', 'horas_exigidas', 'horas_por_semana', 'exige_tiempo_minimo', 'duracion_minutos']
         widgets = {
             'titulo': forms.TextInput(attrs={
                 'class': 'input-field w-full px-4 py-3 rounded-xl text-lg',
@@ -23,10 +23,17 @@ class CursoForm(forms.ModelForm):
             'estado': forms.Select(attrs={
                 'class': 'input-field w-full px-4 py-3 rounded-xl'
             }),
-            'fecha_limite': forms.DateTimeInput(attrs={
-                'class': 'input-field w-full px-4 py-3 rounded-xl',
-                'type': 'datetime-local'
-            }, format='%Y-%m-%dT%H:%M'),
+            'horas_exigidas': forms.NumberInput(attrs={
+                'class': 'input-field w-full px-4 py-3 rounded-xl text-lg',
+                'placeholder': 'Ej: 20'
+            }),
+            'horas_por_semana': forms.NumberInput(attrs={
+                'class': 'input-field w-full px-4 py-3 rounded-xl text-lg',
+                'placeholder': 'Ej: 4'
+            }),
+            'exige_tiempo_minimo': forms.CheckboxInput(attrs={
+                'class': 'w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500'
+            }),
             'duracion_minutos': forms.NumberInput(attrs={
                 'class': 'input-field w-full px-4 py-3 rounded-xl text-lg',
                 'placeholder': 'Ej: 30'
@@ -37,10 +44,9 @@ class CursoForm(forms.ModelForm):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         self.fields['categoria'].required = False
-        self.fields['fecha_limite'].required = False
-        if self.instance and self.instance.fecha_limite:
-            self.initial['fecha_limite'] = self.instance.fecha_limite.strftime('%Y-%m-%dT%H:%M')
-        
+        self.fields['horas_exigidas'].required = False
+        self.fields['horas_por_semana'].required = False
+        self.fields['exige_tiempo_minimo'].required = False
         if self.user and self.user.rol == 'admin':
             from usuarios.models import Usuario
             self.fields['docente_creador'] = forms.ModelChoiceField(
@@ -51,7 +57,81 @@ class CursoForm(forms.ModelForm):
                     'class': 'input-field w-full px-4 py-3 rounded-xl'
                 })
             )
-            self.order_fields(['titulo', 'descripcion', 'categoria', 'estado', 'docente_creador', 'fecha_limite', 'duracion_minutos'])
+            self.order_fields(['titulo', 'descripcion', 'categoria', 'estado', 'docente_creador', 'horas_exigidas', 'horas_por_semana', 'exige_tiempo_minimo', 'duracion_minutos'])
+
+
+class CursoCreateForm(forms.ModelForm):
+    class Meta:
+        model = Curso
+        fields = ['titulo', 'descripcion', 'categoria']
+        widgets = {
+            'titulo': forms.TextInput(attrs={
+                'class': 'input-field w-full px-4 py-3 rounded-xl text-lg',
+                'placeholder': 'Ej: Primeros Auxilios'
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'input-field w-full px-4 py-3 rounded-xl text-lg',
+                'rows': 4,
+                'placeholder': 'Describe el contenido y objetivos del curso...'
+            }),
+            'categoria': forms.Select(attrs={
+                'class': 'input-field w-full px-4 py-3 rounded-xl'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        self.fields['categoria'].required = False
+        if self.user and self.user.rol == 'admin':
+            from usuarios.models import Usuario
+            self.fields['docente_creador'] = forms.ModelChoiceField(
+                queryset=Usuario.objects.filter(rol='docente').order_by('first_name', 'last_name'),
+                required=True,
+                label='Docente Instructor',
+                widget=forms.Select(attrs={
+                    'class': 'input-field w-full px-4 py-3 rounded-xl'
+                })
+            )
+            self.order_fields(['titulo', 'descripcion', 'categoria', 'docente_creador'])
+
+
+class CursoPublishForm(forms.ModelForm):
+    class Meta:
+        model = Curso
+        fields = ['titulo', 'descripcion', 'categoria', 'horas_exigidas', 'horas_por_semana', 'exige_tiempo_minimo']
+        widgets = {
+            'titulo': forms.TextInput(attrs={
+                'class': 'input-field w-full px-4 py-3 rounded-xl text-lg',
+                'placeholder': 'Ej: Primeros Auxilios'
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'input-field w-full px-4 py-3 rounded-xl text-lg',
+                'rows': 4,
+                'placeholder': 'Describe el contenido y objetivos del curso...'
+            }),
+            'categoria': forms.Select(attrs={
+                'class': 'input-field w-full px-4 py-3 rounded-xl'
+            }),
+            'horas_exigidas': forms.NumberInput(attrs={
+                'class': 'input-field w-full px-4 py-3 rounded-xl text-lg',
+                'placeholder': 'Ej: 20'
+            }),
+            'horas_por_semana': forms.NumberInput(attrs={
+                'class': 'input-field w-full px-4 py-3 rounded-xl text-lg',
+                'placeholder': 'Ej: 4'
+            }),
+            'exige_tiempo_minimo': forms.CheckboxInput(attrs={
+                'class': 'w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['categoria'].required = False
+        self.fields['horas_exigidas'].required = True
+        self.fields['horas_por_semana'].required = True
+        self.fields['exige_tiempo_minimo'].required = False
 
 
 class MaterialForm(forms.ModelForm):

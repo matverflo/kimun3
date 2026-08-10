@@ -12,19 +12,28 @@
 
 {% block content %}
 <!-- Header -->
-<div class="mb-6">
-    <h1 class="text-2xl font-bold" style="color: var(--color-text);">
-        {% if es_docente %}
-        <i class="bi bi-book me-2" style="color: var(--color-primary);"></i>
-        Mis Cursos Creados
-        {% else %}
-        <i class="bi bi-book me-2" style="color: var(--color-primary);"></i>
-        Mis Cursos
-        {% endif %}
-    </h1>
-    <p class="mt-1" style="color: var(--color-text-secondary);">
-        {% if es_docente %}Cursos que has creado{% else %}Cursos que tienes asignados{% endif %}
-    </p>
+<div class="mb-6 flex justify-between items-center flex-wrap gap-4">
+    <div>
+        <h1 class="text-2xl font-bold" style="color: var(--color-text);">
+            {% if es_docente %}
+            <i class="bi bi-book me-2" style="color: var(--color-primary);"></i>
+            Mis Cursos Creados
+            {% else %}
+            <i class="bi bi-book me-2" style="color: var(--color-primary);"></i>
+            Mis Cursos
+            {% endif %}
+        </h1>
+        <p class="mt-1" style="color: var(--color-text-secondary);">
+            {% if es_docente %}Cursos que has creado{% else %}Cursos que tienes asignados{% endif %}
+        </p>
+    </div>
+    {% if es_docente %}
+    <div>
+        <a href="{% url 'cursos:curso_create' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium transition-colors" style="background-color: var(--color-primary); hover:opacity-90;">
+            <i class="bi bi-plus-lg"></i> Nuevo Curso
+        </a>
+    </div>
+    {% endif %}
 </div>
 
 <!-- Mensajes -->
@@ -66,17 +75,11 @@
             {{ curso.descripcion|striptags }}
         </p>
         
-        {% if curso.fecha_limite %}
+        {% if curso.semanas_estimadas > 0 %}
         <div class="mb-4">
-            {% if curso.fecha_limite < now %}
-            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium" style="background-color: #fee2e2; color: #dc2626;">
-                <i class="bi bi-exclamation-triangle me-1"></i>Vencido
+            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium" style="background-color: var(--color-info-bg); color: var(--color-info);">
+                <i class="bi bi-clock-history me-1"></i>Duración: {{ curso.semanas_estimadas }} sem.
             </span>
-            {% else %}
-            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium" style="background-color: var(--color-warning-bg); color: var(--color-warning);">
-                <i class="bi bi-clock me-1"></i>{{ curso.fecha_limite|date:"d M" }}
-            </span>
-            {% endif %}
         </div>
         {% endif %}
         
@@ -97,13 +100,21 @@
 {% elif es_docente %}
 <!-- Estado vacío para docente -->
 {% url 'cursos:curso_create' as create_url %}
-{% include 'partials/empty_state.html' with illustration_path='img/illustrations/empty-courses.svg' title='No has creado ningún curso' description='Crea tu primer curso de capacitación.' action_url=create_url action_text='Crear Curso' %}
+{% include 'partials/empty_state.html' with illustration_path='img/illustrations/empty-courses.svg' title='No has creado ningún curso' description='Crea tu primer curso.' action_url=create_url action_text='Crear Curso' %}
 
 <!-- colaborador: cursos inscritos -->
-{% elif inscripciones %}
+{% elif not es_docente %}
+<div class="mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+    <a href="?" class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors {% if not filtro_estado %}bg-blue-100 text-blue-700{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">Todos</a>
+    <a href="?estado=en_progreso" class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors {% if filtro_estado == 'en_progreso' %}bg-blue-100 text-blue-700{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">En Progreso</a>
+    <a href="?estado=asignado" class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors {% if filtro_estado == 'asignado' %}bg-blue-100 text-blue-700{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">Pendientes</a>
+    <a href="?estado=completado" class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors {% if filtro_estado == 'completado' %}bg-blue-100 text-blue-700{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">Completados</a>
+</div>
+
+{% if inscripciones %}
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {% for inscripcion in inscripciones %}
-    <div class="hybrid-card rounded-2xl p-6 group">
+    <div class="hybrid-card rounded-2xl p-6 group flex flex-col h-full">
         <div class="flex items-start justify-between mb-4">
             <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl" 
                  style="background-color: var(--color-primary); color: white;">
@@ -134,15 +145,21 @@
             {{ inscripcion.curso.descripcion|striptags }}
         </p>
         
-        {% if inscripcion.curso.fecha_limite %}
-        <div class="mb-3">
-            {% if inscripcion.curso.fecha_limite < now %}
+        {% if inscripcion.fecha_limite %}
+        <div class="mb-3 flex flex-wrap gap-2">
+            {% if inscripcion.fecha_limite < now %}
             <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium" style="background-color: #fee2e2; color: #dc2626;">
-                <i class="bi bi-exclamation-triangle me-1"></i>Vencido
+                <i class="bi bi-exclamation-triangle me-1"></i>Atrasado
             </span>
             {% else %}
             <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium" style="background-color: var(--color-warning-bg); color: var(--color-warning);">
-                <i class="bi bi-clock me-1"></i>{{ inscripcion.curso.fecha_limite|date:"d M" }}
+                <i class="bi bi-clock me-1"></i>Límite: {{ inscripcion.fecha_limite|date:"d M Y" }}
+            </span>
+            {% endif %}
+            
+            {% if inscripcion.inicio_atrasado %}
+            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium" style="background-color: var(--color-danger-bg); color: var(--color-danger);">
+                <i class="bi bi-clock-history me-1"></i>Inicio Atrasado
             </span>
             {% endif %}
         </div>
@@ -165,7 +182,12 @@
 {% else %}
 <!-- Estado vacío para colaborador -->
 {% url 'usuarios:mis_cursos' as mis_cursos_url %}
-{% include 'partials/empty_state.html' with illustration_path='img/illustrations/empty-courses.svg' title='No tienes cursos asignados' description='Contacta a tu administrador para que te asigne cursos de capacitación.' action_url=mis_cursos_url action_text='Actualizar' %}
+{% if filtro_estado %}
+{% include 'partials/empty_state.html' with illustration_path='img/illustrations/empty-courses.svg' title='No se encontraron cursos' description='No tienes cursos en este estado.' action_url=mis_cursos_url action_text='Ver todos' %}
+{% else %}
+{% include 'partials/empty_state.html' with illustration_path='img/illustrations/empty-courses.svg' title='No tienes cursos asignados' description='Contacta a tu administrador para que te asigne cursos.' action_url=mis_cursos_url action_text='Actualizar' %}
+{% endif %}
+{% endif %}
 {% endif %}
 
 <style>

@@ -90,14 +90,14 @@ def verificar_recordatorios(usuario):
     for inscripcion in inscripciones:
         curso = inscripcion.curso
         
-        if not curso.fecha_limite:
+        if not inscripcion.fecha_limite:
             continue
         
-        if curso.fecha_limite < now:
+        if inscripcion.fecha_limite < now:
             continue
         
         for tipo, delta in reminder_thresholds.items():
-            reminder_date = curso.fecha_limite - delta
+            reminder_date = inscripcion.fecha_limite - delta
             
             if now >= reminder_date and now < reminder_date + timedelta(hours=24):
                 if not Recordatorio.objects.filter(
@@ -109,7 +109,7 @@ def verificar_recordatorios(usuario):
                     subject = f'Recordatorio: {days_left} días para completar "{curso.titulo}"'
                     message = f'''Hola {usuario.get_full_name or usuario.username},
 
-Este es un recordatorio automático. El curso "{curso.titulo}" tiene fecha límite el {curso.fecha_limite.strftime('%d de %B de %Y')}.
+Este es un recordatorio automático. Tu fecha límite para el curso "{curso.titulo}" es el {inscripcion.fecha_limite.strftime('%d de %B de %Y')}.
 
 Te quedan {days_left} días para completar el curso. No olvides realizar las evaluaciones para obtener tu certificado.
 

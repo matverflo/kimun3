@@ -19,8 +19,10 @@ def curso_list(request):
     estado_filter = request.GET.get('estado', '')
     categoria_filter = request.GET.get('categoria', '')
     
-    if request.user.rol in ['admin', 'docente']:
+    if request.user.rol == 'admin':
         cursos = Curso.objects.select_related('docente_creador', 'categoria')
+    elif request.user.rol == 'docente':
+        cursos = Curso.objects.filter(docente_creador=request.user).select_related('categoria')
     else:
         cursos = Curso.objects.filter(estado='publicado').select_related('categoria')
     
@@ -51,22 +53,27 @@ def curso_list(request):
     })
 
 
+from .forms import CursoCreateForm, CursoPublishForm
 @login_required
 @docente_or_admin_required
 def curso_create(request):
     if request.method == 'POST':
-        form = CursoForm(request.POST, user=request.user)
+        form = CursoCreateForm(request.POST, user=request.user)
         if form.is_valid():
             curso = form.save(commit=False)
+            curso.estado = 'borrador'
+            curso.duracion_minutos = 0
+            curso.horas_exigidas = 0
+            curso.horas_por_semana = 0
+            curso.exige_tiempo_minimo = False
             if request.user.rol == 'docente':
                 curso.docente_creador = request.user
             else:
                 curso.docente_creador = form.cleaned_data['docente_creador']
             curso.save()
-            messages.success(request, f'Curso "{curso.titulo}" creado exitosamente.')
             return redirect('cursos:curso_detail', pk=curso.id)
     else:
-        form = CursoForm(initial={'estado': 'borrador'}, user=request.user)
+        form = CursoCreateForm(user=request.user)
 
     return render(request, 'cursos/curso_form.html', {
         'accion': 'crear',
@@ -95,6 +102,33 @@ def curso_edit(request, pk):
         'curso': curso,
         'form': form,
         'categorias': Categoria.objects.all()
+    })
+
+
+@login_required
+@course_owner_or_admin
+def curso_publish(request, pk):
+    curso = get_object_or_404(Curso, pk=pk)
+    
+    # Si ya está publicado, redirigir
+    if curso.estado == 'publicado':
+        return redirect('cursos:curso_detail', pk=curso.id)
+
+    if request.method == 'POST':
+        form = CursoPublishForm(request.POST, instance=curso)
+        if form.is_valid():
+            curso = form.save(commit=False)
+            curso.estado = 'publicado'
+            curso.save()
+            messages.success(request, f'Curso "{curso.titulo}" publicado exitosamente.')
+            return redirect('cursos:curso_detail', pk=curso.id)
+    else:
+        form = CursoPublishForm(instance=curso)
+    
+    return render(request, 'cursos/curso_form.html', {
+        'accion': 'publicar',
+        'curso': curso,
+        'form': form
     })
 
 
@@ -216,10 +250,14 @@ def curso_detail(request, pk):
                 if sesion.fecha_salida and sesion.fecha_entrada:
                     tiempo_invertido_minutos += int((sesion.fecha_salida - sesion.fecha_entrada).total_seconds() / 60)
             
-        if curso.duracion_minutos:
-            tiempo_progress = int((tiempo_invertido_minutos / curso.duracion_minutos) * 100)
-            if tiempo_progress > 100:
-                tiempo_progress = 100
+        if curso.horas_exigidas:
+            minutos_exigidos = curso.horas_exigidas * 60
+            tiempo_progress = int((tiempo_invertido_minutos / minutos_exigidos) * 100) if minutos_exigidos > 0 else 0
+        elif curso.duracion_minutos:
+            tiempo_progress = int((tiempo_invertido_minutos / curso.duracion_minutos) * 100) if curso.duracion_minutos > 0 else 0
+            
+        if tiempo_progress > 100:
+            tiempo_progress = 100
     
     puede_editar = False
     if not simular_estudiante:
@@ -642,7 +680,23 @@ def clase_detail(request, pk):
         if not inscripcion:
             return HttpResponseForbidden('Debes estar inscrito en este curso para ver las clases.')
         elif not simular_estudiante and inscripcion.estado == 'asignado':
+            from django.utils import timezone
+            now = timezone.now()
+            
             inscripcion.estado = 'en_progreso'
+            inscripcion.fecha_inicio_real = now
+            
+            # Calcular retraso y extender tiempo
+            if curso.semanas_estimadas > 0:
+                retraso = now - inscripcion.fecha_asignacion
+                # Si se demoró más de 1 día (por ejemplo), marcamos inicio_atrasado
+                if retraso.days > 1:
+                    inscripcion.inicio_atrasado = True
+                
+                # Le regalamos el tiempo extra que se demoró sumándoselo a su límite original
+                if inscripcion.fecha_limite:
+                    inscripcion.fecha_limite += retraso
+                    
             inscripcion.save()
     
     puede_editar = False

@@ -11,7 +11,7 @@
             Cursos
         </h1>
         <p class="mt-1" style="color: var(--color-text-secondary);">
-            Explora y gestiona los cursos de capacitación
+            Explora y gestiona los cursos
         </p>
     </div>
     {% if is_docente %}
@@ -134,14 +134,10 @@
                         {{ curso.fecha_creacion|date:"d M Y" }}
                     </span>
                     
-                    {% if curso.fecha_limite %}
+                    {% if curso.semanas_estimadas > 0 %}
                     <span class="text-sm font-medium px-3 py-1.5 rounded-lg inline-flex items-center" 
-                          style="{% if curso.fecha_limite < now %}background-color: var(--color-error-bg); color: var(--color-error);{% else %}background-color: var(--color-warning-bg); color: var(--color-warning);{% endif %}">
-                        {% if curso.fecha_limite < now %}
-                        <i class="bi bi-exclamation-triangle-fill me-1.5"></i>Vencido
-                        {% else %}
-                        <i class="bi bi-clock-fill me-1.5"></i>Límite: {{ curso.fecha_limite|date:"d M" }}
-                        {% endif %}
+                          style="background-color: var(--color-info-bg); color: var(--color-info);">
+                        <i class="bi bi-clock-fill me-1.5"></i>Duración: {{ curso.semanas_estimadas }} sem.
                     </span>
                     {% endif %}
                     
@@ -204,16 +200,10 @@
             {% endif %}
             
             <div class="pt-4 border-t flex items-center justify-between mt-auto" style="border-color: var(--color-border);">
-                {% if curso.fecha_limite %}
-                    {% if curso.fecha_limite < now %}
-                    <span class="text-xs font-semibold inline-flex items-center" style="color: var(--color-error);">
-                        <i class="bi bi-exclamation-triangle-fill me-1"></i>Vencido
+                {% if curso.semanas_estimadas > 0 %}
+                    <span class="text-xs font-semibold inline-flex items-center" style="color: var(--color-info);">
+                        <i class="bi bi-clock-history me-1"></i>{{ curso.semanas_estimadas }} sem.
                     </span>
-                    {% else %}
-                    <span class="text-xs font-semibold inline-flex items-center" style="color: var(--color-warning);">
-                        <i class="bi bi-clock-fill me-1"></i>{{ curso.fecha_limite|date:"d M" }}
-                    </span>
-                    {% endif %}
                 {% else %}
                     <span class="text-xs font-medium" style="color: var(--color-text-secondary);">
                         <i class="bi bi-calendar3 me-1"></i>{{ curso.fecha_creacion|date:"d M Y" }}
@@ -259,11 +249,15 @@
 {% endif %}
 {% else %}
 <!-- Estado vacío -->
+{% if query or estado_filter or categoria_filter %}
+{% include 'partials/empty_state.html' with illustration_path='img/illustrations/empty-search.svg' title='No se encontraron resultados' description='No hay cursos que coincidan con tu búsqueda o filtros.' %}
+{% else %}
 {% url 'cursos:curso_create' as create_url %}
 {% if is_docente %}
-{% include 'partials/empty_state.html' with illustration_path='img/illustrations/empty-courses.svg' title='No hay cursos disponibles' description='Crea el primer curso interactivo para que tus estudiantes puedan comenzar a aprender.' action_url=create_url action_text='Crear tu primer curso' %}
+{% include 'partials/empty_state.html' with illustration_path='img/illustrations/empty-courses.svg' title='No has creado ningún curso' description='Crea el primer curso interactivo para que tus estudiantes puedan comenzar a aprender.' action_url=create_url action_text='Crear tu primer curso' %}
 {% else %}
 {% include 'partials/empty_state.html' with illustration_path='img/illustrations/empty-courses.svg' title='No hay cursos disponibles' description='Próximamente habrá nuevos e increíbles cursos disponibles para ti.' %}
+{% endif %}
 {% endif %}
 {% endif %}
 

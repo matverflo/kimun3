@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}{% if accion == 'crear' %}Crear Curso{% else %}Editar Curso{% endif %} - Kimün{% endblock %}
+{% block title %}{% if accion == 'crear' %}Crear Curso{% elif accion == 'publicar' %}Publicar Curso{% else %}Editar Curso{% endif %} - Kimün{% endblock %}
 
 {% block breadcrumbs %}
 <nav class="text-sm mb-4 text-secondary">
@@ -8,7 +8,7 @@
     <i class="bi bi-chevron-right text-xs mx-1"></i>
     <a href="{% url 'cursos:curso_list' %}">Cursos</a>
     <i class="bi bi-chevron-right text-xs mx-1"></i>
-    <span>{% if accion == 'crear' %}Crear{% else %}Editar{% endif %}</span>
+    <span>{% if accion == 'crear' %}Crear{% elif accion == 'publicar' %}Publicar{% else %}Editar{% endif %}</span>
 </nav>
 {% endblock %}
 
@@ -17,15 +17,21 @@
 <div class="mb-6">
     <h1 class="section-title">
         <i class="bi bi-book me-2 text-primary"></i>
-        {% if accion == 'crear' %}Crear Nuevo Curso{% else %}Editar Curso{% endif %}
+        {% if accion == 'crear' %}Crear Nuevo Curso
+        {% elif accion == 'publicar' %}Publicar Curso
+        {% else %}Editar Curso{% endif %}
     </h1>
     <p class="mt-1 text-secondary">
-        Completa los datos del curso de capacitación
+        {% if accion == 'publicar' %}
+        Para publicar el curso, define los tiempos de estudio que se exigirán a los alumnos.
+        {% else %}
+        Completa los datos del curso
+        {% endif %}
     </p>
 </div>
 
 <!-- Formulario -->
-<div class="hybrid-card rounded-2xl p-8 max-w-2xl">
+<div class="hybrid-card rounded-2xl p-8 max-w-3xl mx-auto">
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         
@@ -62,6 +68,7 @@
             {% endif %}
         </div>
         
+        {% if accion != 'crear' and accion != 'publicar' %}
         <!-- Estado -->
         <div class="mb-6">
             <label class="block text-base font-medium mb-2">
@@ -75,8 +82,9 @@
                 Los cursos en borrador solo son visibles para ti. Los publicados son visibles para todos.
             </p>
         </div>
+        {% endif %}
 
-        {% if form.docente_creador %}
+        {% if form.docente_creador and accion != 'publicar' %}
         <div class="mb-6">
             <label class="block text-base font-medium mb-2">
                 <i class="bi bi-person-badge me-2"></i>Docente Instructor <span class="text-red-500">*</span>
@@ -91,25 +99,54 @@
         </div>
         {% endif %}
 
-        <!-- Fecha límite -->
-        <div class="mb-6">
-            <label class="block text-base font-medium mb-2">
-                <i class="bi bi-calendar-event me-2"></i>Fecha límite (opcional)
-            </label>
-            {{ form.fecha_limite }}
-            {% if form.fecha_limite.errors %}
-            <p class="mt-2 text-sm text-red-500">{{ form.fecha_limite.errors.0 }}</p>
-            {% endif %}
-            <p class="mt-2 text-sm text-secondary">
-                Define una fecha límite para completar el curso. Los usuarios inscritos recibirán recordatorios automáticos.
-            </p>
+        {% if accion != 'crear' %}
+        <!-- Detalles de tiempo -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <label for="{{ form.horas_exigidas.id_for_label }}" class="block text-sm font-semibold mb-2" style="color: var(--color-text);">
+                    <i class="bi bi-hourglass-split me-1"></i>Horas Exigidas
+                </label>
+                {{ form.horas_exigidas }}
+                {% if form.horas_exigidas.errors %}
+                <p class="mt-2 text-sm text-red-500">{{ form.horas_exigidas.errors.0 }}</p>
+                {% endif %}
+                <p class="text-xs mt-1" style="color: var(--color-text-secondary);">
+                    {{ form.horas_exigidas.help_text }}
+                </p>
+            </div>
+            
+            <div>
+                <label for="{{ form.horas_por_semana.id_for_label }}" class="block text-sm font-semibold mb-2" style="color: var(--color-text);">
+                    <i class="bi bi-calendar-week me-1"></i>Horas por Semana
+                </label>
+                {{ form.horas_por_semana }}
+                {% if form.horas_por_semana.errors %}
+                <p class="mt-2 text-sm text-red-500">{{ form.horas_por_semana.errors.0 }}</p>
+                {% endif %}
+                <p class="text-xs mt-1" style="color: var(--color-text-secondary);">
+                    {{ form.horas_por_semana.help_text }}
+                </p>
+            </div>
         </div>
+        
+        <div class="mb-8 flex items-center gap-3 bg-gray-50 p-4 rounded-xl border border-gray-200">
+            {{ form.exige_tiempo_minimo }}
+            <div>
+                <label for="{{ form.exige_tiempo_minimo.id_for_label }}" class="block text-sm font-bold" style="color: var(--color-text);">
+                    Exigir tiempo mínimo de estadía
+                </label>
+                <p class="text-xs" style="color: var(--color-text-secondary);">
+                    {{ form.exige_tiempo_minimo.help_text }}
+                </p>
+            </div>
+        </div>
+        {% endif %}
         
         <!-- Botones -->
         <div class="flex gap-4">
             <button type="submit" class="btn-primary px-6 py-3 rounded-xl font-medium">
                 <i class="bi bi-check-lg me-2"></i>
-                {% if accion == 'crear' %}Crear Curso{% else %}Guardar Cambios{% endif %}
+                {% if accion == 'crear' %}Crear Curso{% elif accion == 'publicar' %}Publicar Curso{% else %}Guardar Cambios{% endif %}
             </button>
             <a href="{% url 'cursos:curso_list' %}" class="btn-outline px-6 py-3 rounded-xl font-medium inline-block">
                 <i class="bi bi-x-lg me-2"></i>Cancelar

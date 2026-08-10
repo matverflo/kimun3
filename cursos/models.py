@@ -40,7 +40,9 @@ class Curso(models.Model):
     )
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='borrador')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
-    fecha_limite = models.DateTimeField(null=True, blank=True, verbose_name='Fecha límite')
+    horas_exigidas = models.PositiveIntegerField(default=0, help_text='Horas totales exigidas para completar el curso')
+    horas_por_semana = models.PositiveIntegerField(default=0, help_text='Horas de dedicación semanal esperada')
+    exige_tiempo_minimo = models.BooleanField(default=False, help_text='Evita que el alumno complete el curso en menos tiempo del exigido')
     duracion_minutos = models.PositiveIntegerField(default=0, help_text='Duración estimada en minutos')
 
     class Meta:
@@ -54,6 +56,13 @@ class Curso(models.Model):
     def duracion_horas(self):
         """Retorna la duración estimada en horas (float)"""
         return round(self.duracion_minutos / 60.0, 1) if self.duracion_minutos else 0
+
+    @property
+    def semanas_estimadas(self):
+        import math
+        if self.horas_exigidas > 0 and self.horas_por_semana > 0:
+            return math.ceil(self.horas_exigidas / self.horas_por_semana)
+        return 0
 
 
 class Material(models.Model):
@@ -94,6 +103,7 @@ class InscripcionCurso(models.Model):
     fecha_inicio_real = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de Inicio Real')
     fecha_termino = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de Término')
     fecha_limite = models.DateTimeField(null=True, blank=True, verbose_name='Fecha Límite')
+    inicio_atrasado = models.BooleanField(default=False, help_text='Indica si el alumno inició el curso con retraso y se le otorgó prórroga')
 
     class Meta:
         verbose_name = 'Inscripción'

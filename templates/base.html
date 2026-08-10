@@ -15,7 +15,7 @@
           gtag('config', 'G-YLWGR2PZPR');
         </script>
         <title>
-            {% block title %}Kimün - Plataforma de Capacitación{% endblock %}
+            {% block title %}Kimün - Plataforma de Cursos{% endblock %}
         </title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link
@@ -330,7 +330,7 @@
                             >Dashboard ERP</a
                         >
                         {% endif %}
-                        {% if user.rol != 'colaborador' %}
+                        {% if user.rol == 'admin' %}
                         <a
                             href="{% url 'cursos:curso_list' %}"
                             class="nav-link text-base font-medium {% if request.path|slice:':8' == '/cursos/' %}active{% endif %}"
@@ -390,7 +390,7 @@
                                     class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2"
                                     style="color: var(--color-text);"
                                 >
-                                    <i class="bi bi-patch-check"></i> Mis Certificados
+                                    <i class="bi bi-patch-check"></i> Certificados
                                 </a>
                                 {% endif %}
                                 <a
@@ -482,7 +482,7 @@
                 "
             >
                 <div class="px-4 py-4 space-y-2">
-                    {% if user.rol != 'colaborador' %}
+                    {% if user.rol == 'admin' %}
                     <a
                         href="{% url 'cursos:curso_list' %}"
                         class="block py-3 px-4 rounded-lg {% if request.path|slice:':8' == '/cursos/' %}bg-gray-100 dark:bg-slate-700{% endif %}"
@@ -617,7 +617,7 @@
             "
         >
             <p class="text-base" style="color: var(--color-text-secondary)">
-                © 2026 Kimün - Plataforma de Capacitación ONG ALUMCO
+                © 2026 Kimün - Plataforma de Cursos ONG ALUMCO
             </p>
         </footer>
 

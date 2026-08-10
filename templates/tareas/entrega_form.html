@@ -89,7 +89,7 @@
                     <p class="{% if tarea.fecha_limite < now %}text-red-500 font-bold{% elif close_to_deadline %}text-yellow-600 font-bold dark:text-yellow-500{% endif %}">
                         <i class="bi bi-calendar-event me-1"></i>
                         {% if tarea.fecha_limite < now %}
-                            Vencido: {{ tarea.fecha_limite|date:"d M Y H:i" }}
+                            Atrasado: {{ tarea.fecha_limite|date:"d M Y H:i" }}
                         {% else %}
                             Límite: {{ tarea.fecha_limite|date:"d M Y H:i" }}
                         {% endif %}

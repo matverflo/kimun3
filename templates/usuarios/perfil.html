@@ -26,6 +26,7 @@
     </div>
 
     <!-- Statistics Cards -->
+    {% if user.rol == 'colaborador' %}
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
         <div class="hybrid-card rounded-xl p-4 text-center">
             <div class="w-12 h-12 mx-auto mb-2 rounded-xl flex items-center justify-center" 
@@ -81,9 +82,34 @@
             <p class="text-sm" style="color: var(--color-text-secondary);">Aprobadas</p>
         </div>
     </div>
+    {% elif user.rol in 'docente,admin' %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="hybrid-card rounded-xl p-6 flex items-center gap-4">
+            <div class="w-14 h-14 rounded-xl flex items-center justify-center text-2xl" 
+                 style="background-color: var(--color-primary); color: white;">
+                <i class="bi bi-book-fill"></i>
+            </div>
+            <div>
+                <p class="text-3xl font-bold" style="color: var(--color-text);">{{ cursos_creados }}</p>
+                <p class="font-medium" style="color: var(--color-text-secondary);">Cursos Creados</p>
+            </div>
+        </div>
+        
+        <div class="hybrid-card rounded-xl p-6 flex items-center gap-4">
+            <div class="w-14 h-14 rounded-xl flex items-center justify-center text-2xl" 
+                 style="background-color: var(--color-success-bg); color: var(--color-success);">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div>
+                <p class="text-3xl font-bold" style="color: var(--color-text);">{{ alumnos_inscritos }}</p>
+                <p class="font-medium" style="color: var(--color-text-secondary);">Alumnos Inscritos</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Completion Rate -->
-    {% if total_enrolled > 0 %}
+    {% if user.rol == 'colaborador' and total_enrolled > 0 %}
     <div class="hybrid-card rounded-xl p-4 mb-6">
         <div class="flex items-center justify-between mb-2">
             <span class="font-medium" style="color: var(--color-text);">Tasa de Completación</span>
@@ -138,6 +164,7 @@
         </div>
 
         <!-- Evaluation History -->
+        {% if user.rol == 'colaborador' %}
         <div class="lg:col-span-2 hybrid-card rounded-xl p-6">
             <h3 class="text-lg font-semibold mb-4">
                 <i class="bi bi-clipboard-check me-2" style="color: var(--color-primary);"></i>
@@ -192,9 +219,91 @@
             </div>
             {% endif %}
         </div>
+        {% else %}
+        <!-- Docente Activity -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Ultimos cursos -->
+            <div class="hybrid-card rounded-xl p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">
+                        <i class="bi bi-book me-2" style="color: var(--color-primary);"></i>
+                        Mis Cursos Recientes
+                    </h3>
+                    <a href="{% url 'usuarios:mis_cursos' %}" class="text-sm font-medium" style="color: var(--color-primary);">Ver todos</a>
+                </div>
+                
+                {% if ultimos_cursos %}
+                <div class="space-y-3">
+                    {% for curso in ultimos_cursos %}
+                    <div class="flex items-center justify-between p-3 rounded-lg" style="background-color: var(--color-bg);">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg" 
+                                 style="background-color: var(--color-primary); color: white;">
+                                <i class="bi bi-journal-text"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium" style="color: var(--color-text);">{{ curso.titulo }}</p>
+                                <p class="text-xs" style="color: var(--color-text-secondary);">
+                                    Creado: {{ curso.fecha_creacion|date:"d M Y" }}
+                                </p>
+                            </div>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold" 
+                              style="background-color: {% if curso.estado == 'publicado' %}var(--color-success-bg){% else %}var(--color-warning-bg){% endif %};
+                                     color: {% if curso.estado == 'publicado' %}var(--color-success){% else %}var(--color-warning){% endif %};">
+                            {{ curso.get_estado_display }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-6">
+                    <p style="color: var(--color-text-secondary);">Aún no has creado ningún curso.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Últimas Inscripciones -->
+            <div class="hybrid-card rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-4">
+                    <i class="bi bi-people me-2" style="color: var(--color-success);"></i>
+                    Alumnos Recientes
+                </h3>
+                
+                {% if ultimas_inscripciones %}
+                <div class="space-y-3">
+                    {% for ins in ultimas_inscripciones %}
+                    <div class="flex items-center justify-between p-3 rounded-lg" style="background-color: var(--color-bg);">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold" 
+                                 style="background-color: var(--color-success-bg); color: var(--color-success);">
+                                {{ ins.usuario.get_full_name|default:ins.usuario.username|slice:1|upper }}
+                            </div>
+                            <div>
+                                <p class="font-medium" style="color: var(--color-text);">{{ ins.usuario.get_full_name|default:ins.usuario.username }}</p>
+                                <p class="text-xs" style="color: var(--color-text-secondary);">
+                                    Se inscribió en: <strong style="color: var(--color-text);">{{ ins.curso.titulo }}</strong>
+                                </p>
+                            </div>
+                        </div>
+                        <span class="text-xs" style="color: var(--color-text-secondary);">
+                            {{ ins.fecha_asignacion|date:"d M Y" }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-6">
+                    <p style="color: var(--color-text-secondary);">No hay inscripciones recientes en tus cursos.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Certificates Section -->
+    {% if user.rol == 'colaborador' %}
     <div class="hybrid-card rounded-xl p-6 mt-6">
         <h3 class="text-lg font-semibold mb-4">
             <i class="bi bi-award me-2" style="color: var(--color-primary);"></i>
@@ -266,6 +375,7 @@
             {% endfor %}
         </div>
     </div>
+    {% endif %}
     {% endif %}
 </div>
 {% endblock %}

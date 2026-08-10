@@ -68,12 +68,13 @@ def inicio(request):
         return redirect('pacientes:dashboard_erp')
         
     elif request.user.rol == 'docente':
-
-        mis_cursos_ids = Curso.objects.filter(docente_creador=request.user).values_list('id', flat=True)
+        mis_cursos = Curso.objects.filter(docente_creador=request.user).order_by('-fecha_creacion')
+        mis_cursos_ids = mis_cursos.values_list('id', flat=True)
         context['mis_cursos_count'] = len(mis_cursos_ids)
         context['mis_inscripciones_count'] = InscripcionCurso.objects.filter(curso_id__in=mis_cursos_ids).count()
+        context['mis_ultimos_cursos'] = list(mis_cursos[:3])
     
-    if request.user.rol in ['colaborador', 'docente']:
+    if request.user.rol == 'colaborador':
         context['mis_inscripciones'] = list(
             InscripcionCurso.objects.filter(usuario=request.user)
             .select_related('curso')
@@ -86,12 +87,12 @@ def inicio(request):
             usuario=request.user,
             estado__in=['asignado', 'en_progreso']
         ).select_related('curso'):
-            if ins.curso.fecha_limite:
-                dias_restantes = (ins.curso.fecha_limite - now).days
+            if ins.fecha_limite:
+                dias_restantes = (ins.fecha_limite - now).days
                 if 0 <= dias_restantes <= 7:
                     cursos_cercanos.append({
                         'titulo': ins.curso.titulo,
-                        'fecha_limite': ins.curso.fecha_limite,
+                        'fecha_limite': ins.fecha_limite,
                         'dias': dias_restantes,
                         'vencido': dias_restantes < 0
                     })
@@ -124,11 +125,27 @@ def mis_cursos(request):
             'now': now
         })
     else:
-        inscripciones = InscripcionCurso.objects.filter(
-            usuario=request.user
-        ).select_related('curso').order_by('-fecha_asignacion')
+        from django.db.models import Case, When, Value, IntegerField
+        
+        filtro_estado = request.GET.get('estado', '')
+        inscripciones = InscripcionCurso.objects.filter(usuario=request.user).select_related('curso')
+        
+        if filtro_estado in ['asignado', 'en_progreso', 'completado']:
+            inscripciones = inscripciones.filter(estado=filtro_estado)
+            
+        inscripciones = inscripciones.annotate(
+            estado_orden=Case(
+                When(estado='en_progreso', then=Value(0)),
+                When(estado='asignado', then=Value(1)),
+                When(estado='completado', then=Value(2)),
+                default=Value(3),
+                output_field=IntegerField(),
+            )
+        ).order_by('estado_orden', '-fecha_asignacion')
+        
         return render(request, 'usuarios/mis_cursos.html', {
             'inscripciones': inscripciones,
+            'filtro_estado': filtro_estado,
             'now': now
         })
 
@@ -139,6 +156,26 @@ def perfil(request):
     from certificados.models import Certificado
     from cursos.models import InscripcionCurso
     
+    from cursos.models import Curso
+    
+    if request.user.rol in ['admin', 'docente']:
+        cursos = Curso.objects.filter(docente_creador=request.user).order_by('-fecha_creacion')
+        cursos_creados = cursos.count()
+        alumnos_inscritos = InscripcionCurso.objects.filter(curso__in=cursos).count()
+        
+        ultimos_cursos = cursos[:5]
+        ultimas_inscripciones = InscripcionCurso.objects.filter(
+            curso__in=cursos
+        ).select_related('usuario', 'curso').order_by('-fecha_asignacion')[:5]
+        
+        context = {
+            'cursos_creados': cursos_creados,
+            'alumnos_inscritos': alumnos_inscritos,
+            'ultimos_cursos': ultimos_cursos,
+            'ultimas_inscripciones': ultimas_inscripciones,
+        }
+        return render(request, 'usuarios/perfil.html', context)
+        
     total_enrolled = InscripcionCurso.objects.filter(usuario=request.user).count()
     completed_count = InscripcionCurso.objects.filter(usuario=request.user, estado='completado').count()
     in_progress_count = InscripcionCurso.objects.filter(usuario=request.user, estado='en_progreso').count()
@@ -292,10 +329,18 @@ def inscribir_curso(request, curso_id):
             if InscripcionCurso.objects.filter(usuario=usuario, curso=curso).exists():
                 messages.error(request, f'El usuario {usuario.get_full_name()} ya está inscrito en este curso.')
             else:
+                from django.utils import timezone
+                from datetime import timedelta
+                
+                fecha_limite = None
+                if curso.semanas_estimadas > 0:
+                    fecha_limite = timezone.now() + timedelta(weeks=curso.semanas_estimadas)
+                    
                 inscripcion = InscripcionCurso.objects.create(
                     usuario=usuario,
                     curso=curso,
-                    estado='asignado'
+                    estado='asignado',
+                    fecha_limite=fecha_limite
                 )
                 from usuarios.utils import notificar_inscripcion
                 notificar_inscripcion(inscripcion)
@@ -333,10 +378,18 @@ def inscribir_curso_bulk(request, curso_id):
             if InscripcionCurso.objects.filter(usuario=usuario, curso=curso).exists():
                 ya_inscritos += 1
             else:
+                from django.utils import timezone
+                from datetime import timedelta
+                
+                fecha_limite = None
+                if curso.semanas_estimadas > 0:
+                    fecha_limite = timezone.now() + timedelta(weeks=curso.semanas_estimadas)
+                    
                 inscripcion = InscripcionCurso.objects.create(
                     usuario=usuario,
                     curso=curso,
-                    estado='asignado'
+                    estado='asignado',
+                    fecha_limite=fecha_limite
                 )
                 from usuarios.utils import notificar_inscripcion
                 notificar_inscripcion(inscripcion)
