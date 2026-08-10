@@ -201,6 +201,11 @@ def curso_detail(request, pk):
         if total_items > 0:
             progreso_general = int((items_completados / total_items) * 100)
             
+            if progreso_general == 100 and inscripcion and inscripcion.estado != 'completado' and not simular_estudiante:
+                from cursos.utils import check_curso_completed
+                check_curso_completed(request.user, curso)
+                inscripcion.refresh_from_db()
+            
         from reportes.models import RegistroSesionArt33
         if not simular_estudiante:
             sesiones = RegistroSesionArt33.objects.filter(
