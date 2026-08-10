@@ -2,10 +2,9 @@
 <div class="flex items-center gap-3 p-3 rounded-xl transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
      style="border-left: 4px solid {{ evento.color }}; background-color: var(--color-bg);">
     <div class="flex-1 min-w-0">
-        <a href="{% url 'calendario:evento_edit' evento.pk %}" class="font-medium hover:underline block truncate" 
-           style="color: var(--color-text);">
+        <div class="font-medium block truncate" style="color: var(--color-text);">
             {{ evento.titulo }}
-        </a>
+        </div>
         <div class="flex flex-wrap items-center gap-2 mt-1">
             <span class="text-xs px-2 py-0.5 rounded-full" 
                   style="background-color: {{ evento.color }}20; color: {{ evento.color }};">
@@ -24,7 +23,7 @@
         </p>
         {% endif %}
     </div>
-    {% if user.rol == 'admin' or user.rol == 'docente' %}
+    {% if user.rol == 'admin' or evento.creado_por == user %}
     <div class="flex items-center gap-1">
         <a href="{% url 'calendario:evento_edit' evento.pk %}" 
            class="p-2 rounded-lg transition-colors hover:bg-gray-200 dark:hover:bg-gray-600"

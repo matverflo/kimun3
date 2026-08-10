@@ -145,15 +145,27 @@
                 <div class="space-y-1.5 overflow-y-auto max-h-[80px] custom-scrollbar pr-1">
                     {% for evento in day_events %}
                     {% if evento.fecha_inicio.day == day %}
+                    {% if user.rol == 'admin' or evento.creado_por == user %}
                     <a href="{% url 'calendario:evento_edit' evento.pk %}" 
-                       class="block px-2 py-1.5 rounded-md text-xs transition-transform hover:-translate-y-0.5 hover:shadow-sm"
+                       class="block px-2 py-1.5 rounded-md text-xs transition-transform hover:-translate-y-0.5 hover:shadow-sm relative group/evento"
                        style="background-color: color-mix(in srgb, {{ evento.color|default:'var(--color-info)' }} 15%, transparent); color: color-mix(in srgb, {{ evento.color|default:'var(--color-info)' }} 80%, var(--color-text)); border-left: 3px solid {{ evento.color|default:'var(--color-info)' }};"
-                       title="{{ evento.titulo }} - {{ evento.get_tipo_display }}">
-                        <div class="font-bold truncate leading-tight">{{ evento.titulo }}</div>
+                       title="Editar {{ evento.titulo }}">
+                        <i class="bi bi-pencil-fill absolute top-1.5 right-1.5 opacity-0 group-hover/evento:opacity-100 transition-opacity"></i>
+                        <div class="font-bold truncate leading-tight pr-4">{{ evento.titulo }}</div>
                         {% if evento.curso %}
                         <div class="opacity-80 truncate text-[10px] mt-0.5">{{ evento.curso.titulo }}</div>
                         {% endif %}
                     </a>
+                    {% else %}
+                    <div class="block px-2 py-1.5 rounded-md text-xs"
+                         style="background-color: color-mix(in srgb, {{ evento.color|default:'var(--color-info)' }} 15%, transparent); color: color-mix(in srgb, {{ evento.color|default:'var(--color-info)' }} 80%, var(--color-text)); border-left: 3px solid {{ evento.color|default:'var(--color-info)' }};"
+                         title="{{ evento.titulo }} - {{ evento.get_tipo_display }}">
+                        <div class="font-bold truncate leading-tight">{{ evento.titulo }}</div>
+                        {% if evento.curso %}
+                        <div class="opacity-80 truncate text-[10px] mt-0.5">{{ evento.curso.titulo }}</div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
                     {% endif %}
                     {% endfor %}
                 </div>
