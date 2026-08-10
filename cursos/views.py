@@ -298,6 +298,12 @@ def curso_gestion(request, pk):
             
         inscripcion.progreso = progreso
         
+        if progreso == 100 and inscripcion.estado != 'completado':
+            from cursos.utils import check_curso_completed
+            check_curso_completed(usuario, curso)
+            inscripcion.refresh_from_db()
+            cert = Certificado.objects.filter(usuario=usuario, curso=curso).first()
+        
         if cert:
             if cert.estado == 'aprobado':
                 completados.append(inscripcion)
