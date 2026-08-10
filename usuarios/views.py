@@ -228,8 +228,6 @@ def usuario_create(request):
         'form': form,
         'areas': areas,
         'areas_colaborador': areas_colaborador,
-        'areas_admin': areas_admin,
-        'areas_docente': areas_docente,
         'accion': 'crear'
     })
 
@@ -258,8 +256,6 @@ def usuario_edit(request, pk):
         'usuario': usuario,
         'areas': areas,
         'areas_colaborador': areas_colaborador,
-        'areas_admin': areas_admin,
-        'areas_docente': areas_docente,
         'accion': 'editar'
     })
 
