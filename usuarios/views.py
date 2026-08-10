@@ -213,25 +213,7 @@ def usuario_create(request):
     from usuarios.models import AreaCargo
     areas = AreaCargo.objects.all()
     
-    colaborador_cargos = [
-        'Profesional de Atención Directa',
-        'Técnico de Atención Directa',
-        'Asistente de Trato Directo',
-        'Auxiliares de Servicio',
-        'Manipuladores de Alimento',
-    ]
-    admin_cargos = [
-        'Administración y Apoyo',
-        'Directivos',
-    ]
-    docente_cargos = [
-        'Docente Interno',
-        'Docente Externo',
-    ]
-    
-    areas_colaborador = areas.filter(nombre__in=colaborador_cargos)
-    areas_admin = areas.filter(nombre__in=admin_cargos)
-    areas_docente = areas.filter(nombre__in=docente_cargos)
+    areas_colaborador = areas
     
     if request.method == 'POST':
         form = UsuarioForm(request.POST)
@@ -258,25 +240,7 @@ def usuario_edit(request, pk):
     from usuarios.models import AreaCargo
     areas = AreaCargo.objects.all()
     
-    colaborador_cargos = [
-        'Profesional de Atención Directa',
-        'Técnico de Atención Directa',
-        'Asistente de Trato Directo',
-        'Auxiliares de Servicio',
-        'Manipuladores de Alimento',
-    ]
-    admin_cargos = [
-        'Administración y Apoyo',
-        'Directivos',
-    ]
-    docente_cargos = [
-        'Docente Interno',
-        'Docente Externo',
-    ]
-    
-    areas_colaborador = areas.filter(nombre__in=colaborador_cargos)
-    areas_admin = areas.filter(nombre__in=admin_cargos)
-    areas_docente = areas.filter(nombre__in=docente_cargos)
+    areas_colaborador = areas
     
     usuario = get_object_or_404(Usuario, pk=pk)
     
