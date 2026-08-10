@@ -96,27 +96,11 @@
                     <label class="block text-sm font-medium mb-2">Cargo</label>
                     <select name="cargo" id="cargo-select" class="w-full px-4 py-3 rounded-lg input-field">
                         <option value="">Sin cargo asignado</option>
-                        <optgroup label="Colaborador" id="cargos-colaborador" style="display: none;">
-                            {% for area in areas_colaborador %}
-                            <option value="{{ area.pk }}" {% if form.cargo.value == area.pk|stringformat:'s' %}selected{% endif %}>
-                                {{ area.nombre }}
-                            </option>
-                            {% endfor %}
-                        </optgroup>
-                        <optgroup label="Administrador" id="cargos-admin" style="display: none;">
-                            {% for area in areas_admin %}
-                            <option value="{{ area.pk }}" {% if form.cargo.value == area.pk|stringformat:'s' %}selected{% endif %}>
-                                {{ area.nombre }}
-                            </option>
-                            {% endfor %}
-                        </optgroup>
-                        <optgroup label="Docente" id="cargos-docente" style="display: none;">
-                            {% for area in areas_docente %}
-                            <option value="{{ area.pk }}" {% if form.cargo.value == area.pk|stringformat:'s' %}selected{% endif %}>
-                                {{ area.nombre }}
-                            </option>
-                            {% endfor %}
-                        </optgroup>
+                        {% for area in areas_colaborador %}
+                        <option value="{{ area.pk }}" {% if form.cargo.value == area.pk|stringformat:'s' %}selected{% endif %}>
+                            {{ area.nombre }}
+                        </option>
+                        {% endfor %}
                     </select>
                 </div>
             </div>
