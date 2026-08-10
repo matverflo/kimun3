@@ -22,12 +22,12 @@ def check_curso_completed(usuario, curso):
         if aprobadas < total_evals:
             return False, "Faltan evaluaciones por aprobar"
 
-    # 3. Verificar tiempo invertido
-    tiempo_invertido_minutos = get_tiempo_invertido_minutos(usuario, curso)
-            
-    if curso.duracion_minutos and tiempo_invertido_minutos < curso.duracion_minutos:
-        minutos_faltantes = curso.duracion_minutos - tiempo_invertido_minutos
-        return False, f"Has completado el material, pero te faltan {minutos_faltantes} minutos de estudio exigidos por el curso. ¡Repasa un poco más el contenido!"
+    # 3. (Comentado por solicitud del cliente) Verificar tiempo invertido
+    # tiempo_invertido_minutos = get_tiempo_invertido_minutos(usuario, curso)
+    #         
+    # if curso.duracion_minutos and tiempo_invertido_minutos < curso.duracion_minutos:
+    #     minutos_faltantes = curso.duracion_minutos - tiempo_invertido_minutos
+    #     return False, f"Has completado el material, pero te faltan {minutos_faltantes} minutos de estudio exigidos por el curso. ¡Repasa un poco más el contenido!"
 
     # Si pasa todo, marcamos como completado y generamos certificado
     inscripcion = InscripcionCurso.objects.filter(usuario=usuario, curso=curso).first()

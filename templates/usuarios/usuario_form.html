@@ -72,10 +72,10 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">RUT *</label>
-                    <input type="text" name="rut" required 
+                    <input type="text" name="rut" required id="rut-input"
                            value="{{ form.rut.value|default:'' }}"
                            class="w-full px-4 py-3 rounded-lg input-field"
-                           placeholder="Ej: 12345678-9">
+                           placeholder="Ej: 12345678-9" maxlength="12">
                 </div>
             </div>
         </div>
@@ -92,7 +92,7 @@
                         <option value="colaborador" {% if form.rol.value == 'colaborador' %}selected{% endif %}>Colaborador</option>
                     </select>
                 </div>
-                <div>
+                <div id="cargo-container" style="display: none;">
                     <label class="block text-sm font-medium mb-2">Cargo</label>
                     <select name="cargo" id="cargo-select" class="w-full px-4 py-3 rounded-lg input-field">
                         <option value="">Sin cargo asignado</option>
@@ -137,32 +137,47 @@
 
 <script>
 (function() {
+    // 1. Mostrar/Ocultar el campo Cargo solo si es Colaborador
     const rolSelect = document.querySelector('select[name="rol"]');
+    const cargoContainer = document.getElementById('cargo-container');
     const cargoSelect = document.getElementById('cargo-select');
-    const colaboradorGroup = document.getElementById('cargos-colaborador');
-    const adminGroup = document.getElementById('cargos-admin');
-    const docenteGroup = document.getElementById('cargos-docente');
     
-    function updateCargoOptions() {
-        const selectedRol = rolSelect.value;
-        
-        colaboradorGroup.style.display = 'none';
-        adminGroup.style.display = 'none';
-        docenteGroup.style.display = 'none';
-        
-        if (selectedRol === 'colaborador') {
-            colaboradorGroup.style.display = 'block';
-        } else if (selectedRol === 'admin') {
-            adminGroup.style.display = 'block';
-        } else if (selectedRol === 'docente') {
-            docenteGroup.style.display = 'block';
+    function updateCargoVisibility() {
+        if (rolSelect.value === 'colaborador') {
+            cargoContainer.style.display = 'block';
+        } else {
+            cargoContainer.style.display = 'none';
+            cargoSelect.value = ''; // Limpiar seleccion si no es colaborador
         }
-        
-        cargoSelect.value = '';
     }
     
-    rolSelect.addEventListener('change', updateCargoOptions);
-    updateCargoOptions();
+    if (rolSelect && cargoContainer) {
+        rolSelect.addEventListener('change', updateCargoVisibility);
+        updateCargoVisibility();
+    }
+
+    // 2. Formateador automático de RUT en tiempo real
+    const rutInput = document.getElementById('rut-input');
+    if (rutInput) {
+        rutInput.addEventListener('input', function(e) {
+            // Eliminar todo lo que no sea número o k/K y pasar a mayúscula
+            let value = e.target.value.replace(/[^0-9kK]/g, '').toUpperCase();
+            
+            if (value.length > 1) {
+                let body = value.slice(0, -1);
+                let dv = value.slice(-1);
+                // Poner puntos cada 3 números
+                body = body.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                value = body + '-' + dv;
+            }
+            e.target.value = value;
+        });
+        
+        // Forzar formato inicial si ya tiene valor
+        if (rutInput.value) {
+            rutInput.dispatchEvent(new Event('input'));
+        }
+    }
 })();
 </script>
 {% endblock %}
