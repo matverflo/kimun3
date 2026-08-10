@@ -169,6 +169,10 @@
                          <i class="bi bi-check-circle text-xl"></i> Curso Completado
                      </span>
                  {% endif %}
+             {% elif inscripcion.estado == 'en_progreso' and not next_uncompleted %}
+                 <span class="px-6 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-md" style="background-color: var(--color-warning-bg); color: var(--color-warning); border: 1px solid var(--color-warning);">
+                     <i class="bi bi-hourglass-split text-xl"></i> Contenido completado. Esperando cumplir el tiempo exigido.
+                 </span>
              {% endif %}
              
              <span class="inline-flex items-center px-4 py-2 rounded-lg font-medium text-sm border"
