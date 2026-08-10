@@ -123,17 +123,17 @@
             {% if inscripcion.estado == 'completado' %}
             <span class="px-3 py-1 rounded-full text-xs font-semibold" 
                   style="background-color: var(--color-success-bg); color: var(--color-success);">
-                <i class="bi bi-check-circle me-1"></i>Completado
+                <i class="bi bi-check-circle me-1"></i>Estado: Completado
             </span>
             {% elif inscripcion.estado == 'en_progreso' %}
             <span class="px-3 py-1 rounded-full text-xs font-semibold" 
                   style="background-color: var(--color-warning-bg); color: var(--color-warning);">
-                <i class="bi bi-play-circle me-1"></i>En Progreso
+                <i class="bi bi-play-circle me-1"></i>Estado: En Progreso
             </span>
             {% else %}
             <span class="px-3 py-1 rounded-full text-xs font-semibold" 
                   style="background-color: var(--color-bg); color: var(--color-text-secondary);">
-                <i class="bi bi-clock me-1"></i>Asignado
+                <i class="bi bi-clock me-1"></i>Estado: Asignado
             </span>
             {% endif %}
         </div>

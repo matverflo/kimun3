@@ -227,7 +227,7 @@
                             <i class="bi bi-{% if inscripcion.estado == 'completado' %}check-lg{% elif inscripcion.estado == 'en_progreso' %}play-circle{% else %}clock{% endif %}"></i>
                         </div>
                         <span class="badge badge-{% if inscripcion.estado == 'completado' %}success{% elif inscripcion.estado == 'en_progreso' %}warning{% else %}info{% endif %}">
-                            {% if inscripcion.estado == 'completado' %}Completado{% elif inscripcion.estado == 'en_progreso' %}En progreso{% else %}Asignado{% endif %}
+                            Estado: {% if inscripcion.estado == 'completado' %}Completado{% elif inscripcion.estado == 'en_progreso' %}En progreso{% else %}Asignado{% endif %}
                         </span>
                     </div>
                     <h4 class="font-bold mb-1" style="color: var(--color-text);">{{ inscripcion.curso.titulo }}</h4>
@@ -254,7 +254,7 @@
                             <i class="bi bi-{% if inscripcion.estado == 'completado' %}check-lg{% elif inscripcion.estado == 'en_progreso' %}play-circle{% else %}person-plus{% endif %}"></i>
                         </div>
                         <span class="badge badge-{% if inscripcion.estado == 'completado' %}success{% elif inscripcion.estado == 'en_progreso' %}warning{% else %}info{% endif %}">
-                            {% if inscripcion.estado == 'completado' %}Completado{% elif inscripcion.estado == 'en_progreso' %}En progreso{% else %}Asignado{% endif %}
+                            Estado: {% if inscripcion.estado == 'completado' %}Completado{% elif inscripcion.estado == 'en_progreso' %}En progreso{% else %}Asignado{% endif %}
                         </span>
                     </div>
                     <h4 class="font-bold mb-1" style="color: var(--color-text);">{{ inscripcion.usuario.get_full_name|default:inscripcion.usuario.username }}</h4>
