@@ -148,8 +148,8 @@ def evento_edit(request, pk):
     evento = get_object_or_404(EventoCalendario, pk=pk)
     
     if request.user.rol != 'admin' and evento.creado_por != request.user:
-        from django.http import HttpResponseForbidden
-        return HttpResponseForbidden('No tienes permisos para editar este evento.')
+        messages.error(request, 'No tienes permisos para editar este evento.')
+        return redirect('calendario:calendario')
     
     if request.method == 'POST':
         from .forms import EventoCalendarioForm
@@ -171,8 +171,8 @@ def evento_delete(request, pk):
     evento = get_object_or_404(EventoCalendario, pk=pk)
     
     if request.user.rol != 'admin' and evento.creado_por != request.user:
-        from django.http import HttpResponseForbidden
-        return HttpResponseForbidden('No tienes permisos para eliminar este evento.')
+        messages.error(request, 'No tienes permisos para eliminar este evento.')
+        return redirect('calendario:calendario')
     
     if request.method == 'POST':
         titulo = evento.titulo
