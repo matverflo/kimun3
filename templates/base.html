@@ -17,7 +17,7 @@
         <title>
             {% block title %}Kimün - Plataforma de Cursos{% endblock %}
         </title>
-        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
         <link
             rel="stylesheet"
             href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
@@ -616,7 +616,7 @@
         </footer>
 
         <link rel="stylesheet" href="{% static 'css/toast.css' %}" />
-        <div id="toast-container"></div>
+        <div id="toast-container" class="toast-container"></div>
         <script src="{% static 'js/toast.js' %}"></script>
 
         {% if messages %}
