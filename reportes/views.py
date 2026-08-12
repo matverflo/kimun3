@@ -45,8 +45,8 @@ def get_at_risk_students():
                 if not has_progress:
                     risk_reason = "Sin actividad en 7+ días"
 
-        if enrollment.curso.fecha_limite:
-            days_to_deadline = (enrollment.curso.fecha_limite - timezone.now()).days
+        if enrollment.fecha_limite:
+            days_to_deadline = (enrollment.fecha_limite - timezone.now()).days
             if days_to_deadline <= 7 and days_to_deadline > 0:
                 has_passed = IntentoEvaluacion.objects.filter(
                     usuario=enrollment.usuario,
