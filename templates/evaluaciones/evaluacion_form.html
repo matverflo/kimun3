@@ -9,9 +9,9 @@
 
 {% block breadcrumbs %}
 {% if evaluacion %}
-{% url 'evaluaciones:evaluacion_list' curso_pk=evaluacion.curso.pk as eval_list_url %}
+{% url 'cursos:clase_list' pk=evaluacion.curso.pk as eval_list_url %}
 {% else %}
-{% url 'evaluaciones:evaluacion_list' curso_pk=curso.pk as eval_list_url %}
+{% url 'cursos:clase_list' pk=curso.pk as eval_list_url %}
 {% endif %}
 <nav class="text-sm mb-4 text-secondary">
     <a href="{% url 'inicio' %}">Inicio</a>
@@ -22,7 +22,7 @@
         {{ evaluacion.curso.titulo|default:curso.titulo }}
     </a>
     <i class="bi bi-chevron-right text-xs mx-1"></i>
-    <a href="{{ eval_list_url }}">Evaluaciones</a>
+    <a href="{{ eval_list_url }}">Contenido</a>
     <i class="bi bi-chevron-right text-xs mx-1"></i>
     <span>{% if evaluacion %}Editar{% else %}Nueva{% endif %}</span>
 </nav>
@@ -33,7 +33,7 @@
     <div class="mb-6">
         <a href="{{ eval_list_url }}" 
            class="text-sm hover:underline text-secondary">
-            <i class="bi bi-arrow-left"></i> Volver a evaluaciones
+            <i class="bi bi-arrow-left"></i> Volver a los contenidos
         </a>
         <h1 class="section-title">
             {% if evaluacion %}Editar Evaluación{% else %}Nueva Evaluación{% endif %}
@@ -63,15 +63,14 @@
                     {% endif %}
                 </div>
                 <div>
-                    <label class="block text-sm font-medium mb-2">Orden en el Curso</label>
-                    {{ form.orden }}
-                    {% if form.orden.errors %}
-                    <p class="mt-2 text-sm text-red-500">{{ form.orden.errors.0 }}</p>
+                    <label class="block text-sm font-medium mb-2">Módulo <span class="text-secondary text-sm">(Opcional)</span></label>
+                    {{ form.modulo }}
+                    <p class="mt-2 text-sm text-secondary">Selecciona a qué módulo pertenece.</p>
+                    {% if form.modulo.errors %}
+                    <p class="mt-2 text-sm text-red-500">{{ form.modulo.errors.0 }}</p>
                     {% endif %}
-                    <p class="text-sm mt-1 text-secondary">
-                        Ej: 3 (Se mostrará después del contenido que tenga orden 1 y 2).
-                    </p>
                 </div>
+                {{ form.orden.as_hidden }}
                 <div>
                     <label class="block text-sm font-medium mb-2">Porcentaje para Aprobar</label>
                     {{ form.porcentaje_aprobacion }}

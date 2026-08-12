@@ -1,13 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from django.core.paginator import Paginator
 from django.db import IntegrityError
 from django.db.models import Max
 from django.utils import timezone
-from .models import Curso, Material, InscripcionCurso, Categoria, Clase, ClaseCompletado
-from .forms import CursoForm, MaterialForm, CategoriaForm, ClaseForm
+from .models import Curso, Material, InscripcionCurso, Categoria, Clase, ClaseCompletado, Modulo
+from .forms import CursoForm, MaterialForm, CategoriaForm, ClaseForm, ModuloForm
 from usuarios.decorators import admin_required, docente_or_admin_required, course_owner_or_admin
 
 
@@ -206,6 +206,29 @@ def curso_detail(request, pk):
             'bloqueado': bloqueado,
             'orden': obj.orden
         })
+        
+    # Group by modulo
+    modulos = list(curso.modulos.all())
+    modulos_dict = {m.id: m for m in modulos}
+    
+    agrupados = {}
+    for obj in contenido_con_estado:
+        m_id = getattr(obj['item'], 'modulo_id', None)
+        if m_id not in agrupados:
+            agrupados[m_id] = []
+        agrupados[m_id].append(obj)
+        
+    contenido_agrupado = []
+    for m in modulos:
+        contenido_agrupado.append({
+            'modulo': m,
+            'items': agrupados.get(m.id, [])
+        })
+    if None in agrupados:
+        contenido_agrupado.append({
+            'modulo': None,
+            'items': agrupados[None]
+        })
     
     clases_progress = 0
     progreso_general = 0
@@ -282,6 +305,7 @@ def curso_detail(request, pk):
         'clases': clases,
         'tareas': tareas,
         'contenido_con_estado': contenido_con_estado,
+        'contenido_agrupado': contenido_agrupado,
         'progreso_general': progreso_general,
         'inscripcion': inscripcion,
         'puede_editar': puede_editar,
@@ -626,10 +650,32 @@ def clase_list(request, pk):
             'bloqueado': bloqueado,
             'orden': obj.orden
         })
+
+    # Group by modulo
+    modulos = list(curso.modulos.all())
+    agrupados = {}
+    for obj in contenido_con_estado:
+        m_id = getattr(obj['item'], 'modulo_id', None)
+        if m_id not in agrupados:
+            agrupados[m_id] = []
+        agrupados[m_id].append(obj)
+        
+    contenido_agrupado = []
+    for m in modulos:
+        contenido_agrupado.append({
+            'modulo': m,
+            'items': agrupados.get(m.id, [])
+        })
+    if None in agrupados:
+        contenido_agrupado.append({
+            'modulo': None,
+            'items': agrupados[None]
+        })
     
     return render(request, 'cursos/clase_list.html', {
         'curso': curso,
         'contenido_con_estado': contenido_con_estado,
+        'contenido_agrupado': contenido_agrupado,
         'puede_editar': puede_editar,
         'simular_estudiante': simular_estudiante,
         'es_colaborador': es_colaborador
@@ -642,7 +688,7 @@ def clase_create(request, pk):
     curso = get_object_or_404(Curso, pk=pk)
     
     if request.method == 'POST':
-        form = ClaseForm(request.POST, instance=Clase(curso=curso))
+        form = ClaseForm(request.POST, instance=Clase(curso=curso), curso=curso)
         if form.is_valid():
             try:
                 clase = form.save(commit=False)
@@ -657,7 +703,7 @@ def clase_create(request, pk):
         max_clase = curso.clases.aggregate(max_orden=Max('orden'))['max_orden'] or 0
         max_eval = curso.evaluaciones.aggregate(max_orden=Max('orden'))['max_orden'] or 0
         initial_orden = max(max_clase, max_eval) + 1
-        form = ClaseForm(initial={'orden': initial_orden})
+        form = ClaseForm(initial={'orden': initial_orden}, curso=curso)
     
     return render(request, 'cursos/clase_form.html', {
         'curso': curso,
@@ -750,16 +796,16 @@ def clase_edit(request, pk):
         return HttpResponseForbidden('No puedes editar esta clase.')
     
     if request.method == 'POST':
-        form = ClaseForm(request.POST, instance=clase)
+        form = ClaseForm(request.POST, instance=clase, curso=curso)
         if form.is_valid():
             try:
                 form.save()
                 messages.success(request, f'Clase "{clase.titulo}" actualizada.')
-                return redirect('cursos:clase_detail', pk=clase.id)
+                return redirect('cursos:clase_list', pk=curso.id)
             except IntegrityError:
                 form.add_error('orden', 'Ya existe una clase con ese orden en el curso.')
     else:
-        form = ClaseForm(instance=clase)
+        form = ClaseForm(instance=clase, curso=curso)
     
     return render(request, 'cursos/clase_form.html', {
         'curso': curso,
@@ -854,6 +900,7 @@ def curso_reordenar(request, pk):
                 item_id = int(item.get('id'))
                 item_tipo = item.get('tipo')
                 nuevo_orden = int(item.get('orden'))
+                nuevo_modulo_id = item.get('modulo')
                 
                 if item_tipo == 'clase':
                     obj = get_object_or_404(Clase, pk=item_id, curso=curso)
@@ -864,7 +911,108 @@ def curso_reordenar(request, pk):
                     continue
                 
                 obj.orden = nuevo_orden
-                obj.save(update_fields=['orden'])
+                
+                if nuevo_modulo_id == 'none' or not nuevo_modulo_id:
+                    obj.modulo = None
+                else:
+                    obj.modulo_id = int(nuevo_modulo_id)
+                    
+                obj.save(update_fields=['orden', 'modulo'])
         return JsonResponse({'status': 'ok'})
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+@login_required
+@course_owner_or_admin
+def modulo_create(request, pk):
+    curso = get_object_or_404(Curso, pk=pk)
+    
+    if request.method == 'POST':
+        form = ModuloForm(request.POST)
+        if form.is_valid():
+            modulo = form.save(commit=False)
+            modulo.curso = curso
+            modulo.save()
+            messages.success(request, f'Módulo "{modulo.titulo}" creado.')
+            return redirect('cursos:curso_gestion', pk=curso.id)
+    else:
+        max_orden = curso.modulos.aggregate(max_orden=Max('orden'))['max_orden'] or 0
+        form = ModuloForm(initial={'orden': max_orden + 1})
+    
+    return render(request, 'cursos/modulo_form.html', {
+        'curso': curso,
+        'form': form,
+        'accion': 'crear'
+    })
+
+
+@login_required
+@course_owner_or_admin
+@require_POST
+def modulo_edit_inline(request, pk):
+    modulo = get_object_or_404(Modulo, pk=pk)
+    try:
+        data = json.loads(request.body)
+        titulo = data.get('titulo')
+        if titulo and titulo.strip():
+            modulo.titulo = titulo.strip()
+            modulo.save(update_fields=['titulo'])
+            return JsonResponse({'status': 'ok', 'titulo': modulo.titulo})
+        return JsonResponse({'status': 'error', 'message': 'Título inválido'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+@login_required
+@course_owner_or_admin
+@require_POST
+def modulo_delete_inline(request, pk):
+    modulo = get_object_or_404(Modulo, pk=pk)
+    try:
+        titulo = modulo.titulo
+        modulo.delete()
+        return JsonResponse({'status': 'ok', 'message': f'Módulo "{titulo}" eliminado.'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+@login_required
+@course_owner_or_admin
+def modulo_edit(request, pk):
+    modulo = get_object_or_404(Modulo, pk=pk)
+    curso = modulo.curso
+    
+    if request.method == 'POST':
+        form = ModuloForm(request.POST, instance=modulo)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Módulo "{modulo.titulo}" actualizado.')
+            return redirect('cursos:curso_gestion', pk=curso.id)
+    else:
+        form = ModuloForm(instance=modulo)
+    
+    return render(request, 'cursos/modulo_form.html', {
+        'curso': curso,
+        'modulo': modulo,
+        'form': form,
+        'accion': 'editar'
+    })
+
+
+@login_required
+@course_owner_or_admin
+def modulo_delete(request, pk):
+    modulo = get_object_or_404(Modulo, pk=pk)
+    curso = modulo.curso
+    
+    if request.method == 'POST':
+        titulo = modulo.titulo
+        modulo.delete()
+        messages.success(request, f'Módulo "{titulo}" eliminado.')
+        return redirect('cursos:curso_gestion', pk=curso.id)
+    
+    return render(request, 'cursos/modulo_confirm_delete.html', {
+        'modulo': modulo,
+        'curso': curso
+    })

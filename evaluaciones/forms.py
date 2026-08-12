@@ -64,8 +64,11 @@ class EvaluacionForm(forms.ModelForm):
 
     class Meta:
         model = Evaluacion
-        fields = ['titulo', 'porcentaje_aprobacion', 'max_intentos', 'duracion_minutos', 'preguntas_por_intento', 'orden']
+        fields = ['titulo', 'modulo', 'porcentaje_aprobacion', 'max_intentos', 'duracion_minutos', 'preguntas_por_intento', 'orden']
         widgets = {
+            'modulo': forms.Select(attrs={
+                'class': 'w-full px-4 py-3 rounded-lg input-field'
+            }),
             'titulo': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-3 rounded-lg input-field',
                 'placeholder': 'Ej: Evaluación Final - Módulo 1'
@@ -81,6 +84,13 @@ class EvaluacionForm(forms.ModelForm):
                 'min': 1
             }),
         }
+
+    def __init__(self, *args, **kwargs):
+        self.curso = kwargs.pop('curso', None)
+        super().__init__(*args, **kwargs)
+        if self.curso:
+            self.fields['modulo'].queryset = self.curso.modulos.all()
+            self.fields['modulo'].empty_label = "--- Sin Módulo (Otros contenidos) ---"
 
     def clean_porcentaje_aprobacion(self):
         porcentaje = self.cleaned_data.get('porcentaje_aprobacion')

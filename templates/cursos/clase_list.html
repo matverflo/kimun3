@@ -29,91 +29,122 @@
             </p>
         </div>
         <div class="flex items-center gap-4">
-            {% if request.user.rol in 'admin,docente' %}
-            <div class="inline-flex items-center p-1 rounded-xl" style="background-color: var(--color-bg); border: 1px solid var(--color-border);">
-                <a href="?vista=edicion" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all {% if not simular_estudiante %}shadow-sm{% else %}opacity-60 hover:opacity-100{% endif %}"
-                   style="{% if not simular_estudiante %}background-color: var(--color-surface); color: var(--color-primary);{% else %}color: var(--color-text-secondary);{% endif %}">
-                    <i class="bi bi-pencil-square"></i> Modo Edición
-                </a>
-                <a href="?vista=estudiante" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all {% if simular_estudiante %}shadow-sm{% else %}opacity-60 hover:opacity-100{% endif %}"
-                   style="{% if simular_estudiante %}background-color: var(--color-surface); color: var(--color-primary);{% else %}color: var(--color-text-secondary);{% endif %}">
-                    <i class="bi bi-eye"></i> Vista Estudiante
-                </a>
-            </div>
-            {% endif %}
-            
             {% if puede_editar %}
+            <a href="{% url 'cursos:modulo_create' pk=curso.id %}" class="btn-outline px-4 py-2 rounded-xl text-sm whitespace-nowrap">
+                <i class="bi bi-folder-plus me-1"></i>Nuevo Módulo
+            </a>
             <a href="{% url 'cursos:clase_create' pk=curso.id %}" class="btn-primary px-4 py-2 rounded-xl text-sm whitespace-nowrap">
-                <i class="bi bi-plus-lg me-1"></i>Nueva Clase
+                <i class="bi bi-file-earmark-plus me-1"></i>Nueva Clase
             </a>
             {% endif %}
         </div>
     </div>
 </div>
 
-{% if contenido_con_estado %}
-<div class="space-y-4" id="contenido-list">
-    {% for ctx in contenido_con_estado %}
-    <div class="contenido-item flex items-center justify-between p-4 rounded-xl transition-opacity {% if ctx.bloqueado %}opacity-50{% endif %}" 
-         style="background-color: var(--color-bg); {% if puede_editar %}cursor: grab;{% endif %}"
-         data-id="{{ ctx.item.id }}" data-tipo="{% if ctx.is_clase %}clase{% else %}evaluacion{% endif %}">
-        <div class="flex items-center gap-4">
-            {% if puede_editar %}
-            <div class="drag-handle text-gray-400 hover:text-gray-600 px-2 cursor-grab text-xl" style="color: var(--color-text-secondary);">
-                <i class="bi bi-grip-vertical"></i>
-            </div>
-            {% endif %}
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold orden-badge"
-                 style="background-color: {% if ctx.completado %}var(--color-success){% elif ctx.is_clase %}var(--color-primary){% else %}var(--color-danger){% endif %}; color: white;">
-                 {% if ctx.bloqueado %}
-                 <i class="bi bi-lock-fill"></i>
-                 {% elif ctx.completado %}
-                 <i class="bi bi-check-lg"></i>
-                 {% else %}
-                     {{ ctx.item.orden }}
-                 {% endif %}
-            </div>
-            <div>
-                <span class="font-medium block" style="color: var(--color-text);">{{ ctx.item.titulo }}</span>
-                <span class="text-sm" style="color: var(--color-text-secondary);">
-                    {% if ctx.is_clase %}
-                    <i class="bi bi-file-text me-1"></i>Clase
-                    {% else %}
-                    <i class="bi bi-ui-checks me-1"></i>Evaluación
+{% if contenido_agrupado %}
+<div class="space-y-6">
+    {% for grupo in contenido_agrupado %}
+        {% if grupo.items or puede_editar %}
+        <div class="module-group">
+            {% if grupo.modulo %}
+            <div class="flex items-center mb-3">
+                <h3 class="text-xl font-bold flex items-center gap-2" style="color: var(--color-text);">
+                    <i class="bi bi-folder2-open" style="color: var(--color-primary);"></i>
+                    <span id="modulo-title-{{ grupo.modulo.id }}">{{ grupo.modulo.titulo }}</span>
+                    {% if puede_editar %}
+                    <div class="inline-flex gap-1 ms-2">
+                        <button type="button" onclick="editModuloInline({{ grupo.modulo.id }})" class="text-xs hover:bg-gray-100 p-1.5 rounded transition-colors text-secondary" title="Editar nombre">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                        <button type="button" onclick="confirmDeleteModulo({{ grupo.modulo.id }})" class="text-xs hover:bg-red-50 p-1.5 rounded transition-colors text-red-500 hover:text-red-600" title="Eliminar módulo">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
                     {% endif %}
-                </span>
+                </h3>
             </div>
-        </div>
-        <div class="flex items-center gap-2">
-            {% if puede_editar %}
-                {% if ctx.is_clase %}
-                <a href="{% url 'cursos:clase_edit' pk=ctx.item.id %}" class="w-10 h-10 flex items-center justify-center rounded-xl transition-colors hover:bg-gray-100" style="color: var(--color-primary);" title="Editar">
-                    <i class="bi bi-pencil-square text-lg"></i>
-                </a>
-                {% else %}
-                <a href="{% url 'evaluaciones:evaluacion_edit' pk=ctx.item.id %}" class="w-10 h-10 flex items-center justify-center rounded-xl transition-colors hover:bg-gray-100" style="color: var(--color-primary);" title="Editar">
-                    <i class="bi bi-pencil-square text-lg"></i>
-                </a>
-                {% endif %}
+            {% if grupo.modulo.descripcion %}
+            <p class="text-sm mb-3" style="color: var(--color-text-secondary);">{{ grupo.modulo.descripcion }}</p>
+            {% endif %}
             {% else %}
-                {% if ctx.bloqueado %}
-                <span class="px-4 py-2 rounded-xl text-sm font-medium" style="background-color: var(--color-border); color: var(--color-text-secondary);">
-                    <i class="bi bi-lock me-1"></i>Bloqueado
-                </span>
-                {% else %}
-                    {% if ctx.is_clase %}
-                    <a href="{% url 'cursos:clase_detail' ctx.item.id %}" class="btn-outline px-4 py-2 rounded-xl text-sm hover:bg-gray-50 transition-colors">
-                        <i class="bi bi-eye me-1"></i>Ver Contenido
-                    </a>
-                    {% else %}
-                    <a href="{% url 'evaluaciones:tomar_evaluacion' ctx.item.id %}" class="btn-outline px-4 py-2 rounded-xl text-sm hover:bg-gray-50 transition-colors">
-                        <i class="bi bi-pencil me-1"></i>Rendir
-                    </a>
-                    {% endif %}
-                {% endif %}
+            <div class="flex justify-between items-center mb-3 mt-4">
+                <h3 class="text-xl font-bold flex items-center gap-2" style="color: var(--color-text-secondary);">
+                    <i class="bi bi-folder-x"></i> Otros Contenidos
+                </h3>
+            </div>
             {% endif %}
+            
+            <div class="space-y-4 sortable-list" id="contenido-list-{{ grupo.modulo.id|default:'none' }}">
+                {% for ctx in grupo.items %}
+                <div class="contenido-item flex items-center justify-between p-4 rounded-xl transition-opacity {% if ctx.bloqueado %}opacity-50{% endif %}" 
+                     style="background-color: var(--color-bg); {% if puede_editar %}cursor: grab;{% endif %}"
+                     data-id="{{ ctx.item.id }}" data-tipo="{% if ctx.is_clase %}clase{% else %}evaluacion{% endif %}">
+                    <div class="flex items-center gap-4">
+                        {% if puede_editar %}
+                        <div class="drag-handle text-gray-400 hover:text-gray-600 px-2 cursor-grab text-xl" style="color: var(--color-text-secondary);">
+                            <i class="bi bi-grip-vertical"></i>
+                        </div>
+                        {% endif %}
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold orden-badge"
+                             style="background-color: {% if ctx.completado %}var(--color-success){% elif ctx.is_clase %}var(--color-primary){% else %}var(--color-danger){% endif %}; color: white;">
+                             {% if ctx.bloqueado %}
+                             <i class="bi bi-lock-fill"></i>
+                             {% elif ctx.completado %}
+                             <i class="bi bi-check-lg"></i>
+                             {% else %}
+                                 {{ ctx.item.orden }}
+                             {% endif %}
+                        </div>
+                        <div>
+                            <span class="font-medium block" style="color: var(--color-text);">{{ ctx.item.titulo }}</span>
+                            <span class="text-sm" style="color: var(--color-text-secondary);">
+                                {% if ctx.is_clase %}
+                                <i class="bi bi-file-text me-1"></i>Clase
+                                {% else %}
+                                <i class="bi bi-ui-checks me-1"></i>Evaluación
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        {% if puede_editar %}
+                            {% if ctx.is_clase %}
+                            <a href="{% url 'cursos:clase_edit' pk=ctx.item.id %}" class="w-10 h-10 flex items-center justify-center rounded-xl transition-colors hover:bg-gray-100" style="color: var(--color-primary);" title="Editar">
+                                <i class="bi bi-pencil-square text-lg"></i>
+                            </a>
+                            {% else %}
+                            <a href="{% url 'evaluaciones:evaluacion_edit' pk=ctx.item.id %}" class="w-10 h-10 flex items-center justify-center rounded-xl transition-colors hover:bg-gray-100" style="color: var(--color-primary);" title="Editar">
+                                <i class="bi bi-pencil-square text-lg"></i>
+                            </a>
+                            {% endif %}
+                        {% else %}
+                            {% if ctx.bloqueado %}
+                            <span class="px-4 py-2 rounded-xl text-sm font-medium" style="background-color: var(--color-border); color: var(--color-text-secondary);">
+                                <i class="bi bi-lock me-1"></i>Bloqueado
+                            </span>
+                            {% else %}
+                                {% if ctx.is_clase %}
+                                <a href="{% url 'cursos:clase_detail' ctx.item.id %}" class="btn-outline px-4 py-2 rounded-xl text-sm hover:bg-gray-50 transition-colors">
+                                    <i class="bi bi-eye me-1"></i>Ver Contenido
+                                </a>
+                                {% else %}
+                                <a href="{% url 'evaluaciones:tomar_evaluacion' ctx.item.id %}" class="btn-outline px-4 py-2 rounded-xl text-sm hover:bg-gray-50 transition-colors">
+                                    <i class="bi bi-pencil me-1"></i>Rendir
+                                </a>
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+                {% if not grupo.items and puede_editar %}
+                <p class="text-sm p-4 text-center border-2 border-dashed rounded-xl" style="color: var(--color-text-secondary); border-color: var(--color-border);">
+                    No hay contenido en este módulo. Arrastra contenido aquí o crea uno nuevo.
+                </p>
+                {% endif %}
+            </div>
         </div>
-    </div>
+        {% endif %}
     {% endfor %}
 </div>
 {% else %}
@@ -135,23 +166,53 @@
 {% endif %}
 
 {% if puede_editar %}
+<!-- Modal Editar Módulo -->
+<div id="editModuloModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-50 transition-opacity">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-lg shadow-xl transform transition-all duration-200 scale-95 opacity-0" id="editModuloModalContent">
+        <h3 class="text-lg font-bold mb-4" style="color: var(--color-text);">Editar nombre del módulo</h3>
+        <textarea id="editModuloInput" rows="2" class="w-full border rounded-xl px-4 py-2 mb-6 resize-none" style="border-color: var(--color-border); background-color: var(--color-bg); color: var(--color-text);"></textarea>
+        <div class="flex justify-end gap-3">
+            <button type="button" onclick="closeEditModal()" class="btn-outline px-4 py-2 rounded-xl text-sm font-medium">Cancelar</button>
+            <button type="button" id="saveModuloBtn" class="btn-primary px-4 py-2 rounded-xl text-sm font-medium">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Eliminar Módulo -->
+<div id="deleteModuloModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-50 transition-opacity">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-md shadow-xl transform transition-all duration-200 scale-95 opacity-0" id="deleteModuloModalContent">
+        <h3 class="text-lg font-bold mb-2" style="color: var(--color-text);">Eliminar Módulo</h3>
+        <p class="text-sm mb-6" style="color: var(--color-text-secondary);">¿Estás seguro de que deseas eliminar el módulo <strong id="deleteModuloTitle" style="color: var(--color-text);"></strong>?</p>
+        <p class="text-sm mb-6" style="color: var(--color-text-secondary);">Las clases y evaluaciones dentro de este módulo no se borrarán, pero se moverán a "Otros Contenidos".</p>
+        <div class="flex justify-end gap-3">
+            <button type="button" onclick="closeDeleteModal()" class="btn-outline px-4 py-2 rounded-xl text-sm font-medium">Cancelar</button>
+            <button type="button" id="confirmDeleteBtn" class="px-4 py-2 rounded-xl text-sm font-medium text-white shadow-sm transition-transform hover:-translate-y-0.5 bg-red-500 hover:bg-red-600">Eliminar</button>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        var el = document.getElementById('contenido-list');
-        if (el) {
-            var sortable = Sortable.create(el, {
+        var sortables = document.querySelectorAll('.sortable-list');
+        sortables.forEach(function(el) {
+            Sortable.create(el, {
+                group: 'shared', // set both lists to same group
                 handle: '.drag-handle',
                 animation: 150,
                 ghostClass: 'opacity-50',
                 onEnd: function (evt) {
-                    // Collect new order
+                    // Collect new order globally across all sortable lists
                     let items = [];
                     document.querySelectorAll('.contenido-item').forEach((row, index) => {
+                        let listId = row.closest('.sortable-list').id;
+                        let moduloId = listId.replace('contenido-list-', '');
+                        
                         items.push({
                             id: row.dataset.id,
                             tipo: row.dataset.tipo,
-                            orden: index + 1
+                            orden: index + 1,
+                            modulo: moduloId
                         });
                         
                         // Update UI numbers
@@ -179,7 +240,156 @@
                     });
                 },
             });
+        });
+    });
+
+    let currentEditModuloId = null;
+
+    function editModuloInline(moduloId) {
+        currentEditModuloId = moduloId;
+        const titleSpan = document.getElementById(`modulo-title-${moduloId}`);
+        
+        const modal = document.getElementById('editModuloModal');
+        const modalContent = document.getElementById('editModuloModalContent');
+        const input = document.getElementById('editModuloInput');
+        
+        input.value = titleSpan.innerText;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        setTimeout(() => {
+            modalContent.classList.remove('scale-95', 'opacity-0');
+            modalContent.classList.add('scale-100', 'opacity-100');
+            input.focus();
+        }, 10);
+    }
+    
+    function closeEditModal() {
+        const modal = document.getElementById('editModuloModal');
+        const modalContent = document.getElementById('editModuloModalContent');
+        
+        modalContent.classList.remove('scale-100', 'opacity-100');
+        modalContent.classList.add('scale-95', 'opacity-0');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            currentEditModuloId = null;
+        }, 200);
+    }
+    
+    document.getElementById('saveModuloBtn').addEventListener('click', function() {
+        if (!currentEditModuloId) return;
+        
+        const input = document.getElementById('editModuloInput');
+        const newTitle = input.value.trim();
+        const titleSpan = document.getElementById(`modulo-title-${currentEditModuloId}`);
+        
+        if (newTitle !== "" && newTitle !== titleSpan.innerText) {
+            const btn = this;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin me-2"></i>Guardando...';
+            btn.disabled = true;
+            
+            fetch(`/cursos/modulos/${currentEditModuloId}/editar-inline/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ titulo: newTitle })
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.status === 'ok') {
+                      titleSpan.innerText = data.titulo;
+                      closeEditModal();
+                  } else {
+                      alert(data.message || "Error al actualizar el módulo.");
+                  }
+              }).catch(error => {
+                  console.error('Error:', error);
+                  alert("Error de conexión al actualizar.");
+              }).finally(() => {
+                  btn.innerHTML = originalText;
+                  btn.disabled = false;
+              });
+        } else {
+            closeEditModal();
         }
+    });
+    
+    document.getElementById('editModuloInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('saveModuloBtn').click();
+        } else if (e.key === 'Escape') {
+            closeEditModal();
+        }
+    });
+
+    let currentDeleteModuloId = null;
+
+    function confirmDeleteModulo(moduloId) {
+        currentDeleteModuloId = moduloId;
+        const titleSpan = document.getElementById(`modulo-title-${moduloId}`);
+        const modal = document.getElementById('deleteModuloModal');
+        const modalContent = document.getElementById('deleteModuloModalContent');
+        const titleStrong = document.getElementById('deleteModuloTitle');
+        
+        titleStrong.innerText = titleSpan.innerText;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        setTimeout(() => {
+            modalContent.classList.remove('scale-95', 'opacity-0');
+            modalContent.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+
+    function closeDeleteModal() {
+        const modal = document.getElementById('deleteModuloModal');
+        const modalContent = document.getElementById('deleteModuloModalContent');
+        
+        modalContent.classList.remove('scale-100', 'opacity-100');
+        modalContent.classList.add('scale-95', 'opacity-0');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            currentDeleteModuloId = null;
+        }, 200);
+    }
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+        if (!currentDeleteModuloId) return;
+        
+        const btn = this;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin me-2"></i>Eliminando...';
+        btn.disabled = true;
+        
+        fetch(`/cursos/modulos/${currentDeleteModuloId}/eliminar-inline/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        }).then(response => response.json())
+          .then(data => {
+              if (data.status === 'ok') {
+                  // Reload the page to reflect the deleted module and moved items
+                  window.location.reload();
+              } else {
+                  alert(data.message || "Error al eliminar el módulo.");
+                  btn.innerHTML = originalText;
+                  btn.disabled = false;
+              }
+          }).catch(error => {
+              console.error('Error:', error);
+              alert("Error de conexión al eliminar.");
+              btn.innerHTML = originalText;
+              btn.disabled = false;
+          });
     });
 </script>
 {% endif %}

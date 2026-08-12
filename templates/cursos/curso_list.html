@@ -21,53 +21,53 @@
     {% endif %}
 </div>
 
-<!-- Search and Filter -->
-<div class="mb-6 p-4 rounded-xl" style="background-color: var(--color-bg);">
-    <form method="get" class="flex flex-col md:flex-row gap-4">
-        <div class="flex-1">
+<!-- Filters -->
+<div class="mb-8 p-6 rounded-2xl border shadow-sm" style="background-color: var(--color-bg); border-color: var(--color-border);">
+    <form method="get" class="flex flex-col md:flex-row gap-4 items-end">
+        <!-- Búsqueda -->
+        <div class="w-full md:flex-1">
+            <label class="block text-sm font-semibold mb-2" style="color: var(--color-text-secondary);">Buscar</label>
             <div class="relative">
-                <i class="bi bi-search absolute left-3 top-1/2 transform -translate-y-1/2" style="color: var(--color-text-secondary);" aria-hidden="true"></i>
+                <i class="bi bi-search absolute left-4 top-1/2 transform -translate-y-1/2" style="color: var(--color-text-secondary);"></i>
                 <input type="text" name="q" value="{{ query|default:'' }}" 
                        placeholder="Buscar cursos..."
-                       aria-label="Buscar cursos"
-                       class="w-full pl-10 pr-4 py-3 rounded-lg input-field focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                       class="w-full pl-11 pr-4 py-3 rounded-xl border text-base focus:ring-2 focus:ring-blue-500 focus:outline-none transition-shadow" 
+                       style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);">
             </div>
         </div>
+        
+        <!-- Categorías -->
         {% if categorias %}
         <div class="w-full md:w-48">
-            <select name="categoria" aria-label="Filtrar por categoría" class="w-full px-4 py-3 rounded-lg input-field focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                <option value="">Todas las categorías</option>
+            <label class="block text-sm font-semibold mb-2" style="color: var(--color-text-secondary);">Categorías</label>
+            <select name="categoria" onchange="this.form.submit()" class="w-full px-4 py-3 rounded-xl border text-base focus:ring-2 focus:ring-blue-500 focus:outline-none transition-shadow" style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);">
+                <option value="">Todas</option>
                 {% for cat in categorias %}
                 <option value="{{ cat.pk }}" {% if categoria_filter == cat.pk|stringformat:'s' %}selected{% endif %}>{{ cat.nombre }}</option>
                 {% endfor %}
             </select>
         </div>
         {% endif %}
+        
+        <!-- Estados -->
         {% if is_docente %}
         <div class="w-full md:w-40">
-            <select name="estado" aria-label="Filtrar por estado" class="w-full px-4 py-3 rounded-lg input-field focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                <option value="">Todos los estados</option>
-                <option value="publicado" {% if estado_filter == 'publicado' %}selected{% endif %}>Publicado</option>
-                <option value="borrador" {% if estado_filter == 'borrador' %}selected{% endif %}>Borrador</option>
+            <label class="block text-sm font-semibold mb-2" style="color: var(--color-text-secondary);">Estados</label>
+            <select name="estado" onchange="this.form.submit()" class="w-full px-4 py-3 rounded-xl border text-base focus:ring-2 focus:ring-blue-500 focus:outline-none transition-shadow" style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);">
+                <option value="">Todos</option>
+                <option value="publicado" {% if estado_filter == 'publicado' %}selected{% endif %}>Publicados</option>
+                <option value="borrador" {% if estado_filter == 'borrador' %}selected{% endif %}>Borradores</option>
             </select>
         </div>
         {% endif %}
-        <div class="flex gap-2">
-            <button type="submit" aria-label="Buscar" class="btn-primary px-4 py-3 rounded-lg">
-                <i class="bi bi-search" aria-hidden="true"></i>
-            </button>
-            {% if query or estado_filter or categoria_filter %}
-            <a href="{% url 'cursos:curso_list' %}" class="btn-outline px-4 py-3 rounded-lg" title="Limpiar filtros" aria-label="Limpiar filtros">
-                <i class="bi bi-x-lg" aria-hidden="true"></i>
-            </a>
-            {% endif %}
-        </div>
+
     </form>
+    
     {% if query or estado_filter or categoria_filter %}
-    <p class="mt-2 text-sm" style="color: var(--color-text-secondary);">
+    <p class="mt-4 text-sm font-medium" style="color: var(--color-text-secondary);">
         <i class="bi bi-info-circle me-1"></i>
         {% with cursos|length as total %}
-        Mostrando {{ total }} resultado{{ total|pluralize }}{% if query %} para "{{ query }}"{% endif %}{% if categoria_filter %} en categoría{% endif %}{% if estado_filter %} en estado "{{ estado_filter }}"{% endif %}
+        Mostrando {{ total }} resultado{{ total|pluralize }}{% if query %} para "{{ query }}"{% endif %}{% if categoria_filter %} en esta categoría{% endif %}{% if estado_filter %} en este estado{% endif %}
         {% endwith %}
     </p>
     {% endif %}

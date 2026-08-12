@@ -1,6 +1,6 @@
 from django import forms
 from django.conf import settings
-from .models import Curso, Material, Categoria, Clase
+from .models import Curso, Material, Categoria, Clase, Modulo
 
 
 class CursoForm(forms.ModelForm):
@@ -171,6 +171,28 @@ class MaterialForm(forms.ModelForm):
         return cleaned_data
 
 
+class ModuloForm(forms.ModelForm):
+    class Meta:
+        model = Modulo
+        fields = ['titulo', 'descripcion', 'orden']
+        widgets = {
+            'titulo': forms.TextInput(attrs={
+                'class': 'input-field w-full px-4 py-3 rounded-xl text-lg',
+                'placeholder': 'Ej: Módulo 1: Introducción'
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'input-field w-full px-4 py-3 rounded-xl text-lg',
+                'rows': 3,
+                'placeholder': 'Descripción breve del módulo...'
+            }),
+            'orden': forms.NumberInput(attrs={
+                'class': 'input-field w-full px-4 py-3 rounded-xl text-lg',
+                'placeholder': '1',
+                'min': '1'
+            }),
+        }
+
+
 class CategoriaForm(forms.ModelForm):
     class Meta:
         model = Categoria
@@ -195,8 +217,11 @@ class CategoriaForm(forms.ModelForm):
 class ClaseForm(forms.ModelForm):
     class Meta:
         model = Clase
-        fields = ['titulo', 'contenido', 'orden']
+        fields = ['titulo', 'modulo', 'contenido', 'orden']
         widgets = {
+            'modulo': forms.Select(attrs={
+                'class': 'input-field w-full px-4 py-3 rounded-xl'
+            }),
             'titulo': forms.TextInput(attrs={
                 'class': 'input-field w-full px-4 py-3 rounded-xl text-lg',
                 'placeholder': 'Ej: Introducción a los Primeros Auxilios'
@@ -207,6 +232,13 @@ class ClaseForm(forms.ModelForm):
                 'min': '1'
             }),
         }
+
+    def __init__(self, *args, **kwargs):
+        self.curso = kwargs.pop('curso', None)
+        super().__init__(*args, **kwargs)
+        if self.curso:
+            self.fields['modulo'].queryset = self.curso.modulos.all()
+            self.fields['modulo'].empty_label = "--- Sin Módulo (Otros contenidos) ---"
 
     def clean_orden(self):
         orden = self.cleaned_data.get('orden')

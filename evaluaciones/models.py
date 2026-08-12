@@ -20,6 +20,7 @@ class BancoPreguntas(models.Model):
 
 class Evaluacion(models.Model):
     curso = models.ForeignKey('cursos.Curso', on_delete=models.CASCADE, related_name='evaluaciones')
+    modulo = models.ForeignKey('cursos.Modulo', on_delete=models.SET_NULL, null=True, blank=True, related_name='evaluaciones')
     titulo = models.CharField(max_length=200)
     porcentaje_aprobacion = models.IntegerField(default=70)
     max_intentos = models.IntegerField(default=0, help_text='0 = sin límite')

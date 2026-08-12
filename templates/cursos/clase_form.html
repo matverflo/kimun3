@@ -64,22 +64,20 @@
             {% endif %}
         </div>
         
-        {% if accion == 'crear' %}
-            {{ form.orden.as_hidden }}
-        {% else %}
         <div class="mb-6">
             <label class="block text-base font-medium mb-2">
-                Orden <span class="text-red-500">*</span>
+                Módulo <span class="text-secondary text-sm">(Opcional)</span>
             </label>
-            {{ form.orden }}
+            {{ form.modulo }}
             <p class="mt-2 text-sm text-secondary">
-                El orden determina el acceso secuencial. La Clase 2 se desbloquea después de completar la Clase 1.
+                Selecciona a qué módulo pertenece esta clase. Si no seleccionas ninguno, quedará en "Otros Contenidos".
             </p>
-            {% if form.orden.errors %}
-            <p class="mt-2 text-sm text-red-500">{{ form.orden.errors.0 }}</p>
+            {% if form.modulo.errors %}
+            <p class="mt-2 text-sm text-red-500">{{ form.modulo.errors.0 }}</p>
             {% endif %}
         </div>
-        {% endif %}
+        
+        {{ form.orden.as_hidden }}
         
         <div class="mb-6">
             <label class="block text-base font-medium mb-2">

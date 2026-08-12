@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.http import JsonResponse, HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from django.db import transaction
+from django.db.models import Max
 from django.utils import timezone
 from django.db.models import Q
 from .models import Evaluacion, Pregunta, Alternativa, IntentoEvaluacion, BancoPreguntas
@@ -61,7 +62,7 @@ def evaluacion_create(request, curso_pk):
         return HttpResponseForbidden('No puedes crear evaluaciones en este curso.')
     
     if request.method == 'POST':
-        form = EvaluacionForm(request.POST)
+        form = EvaluacionForm(request.POST, curso=curso)
         
         try:
             preguntas_data = json.loads(request.POST.get('preguntas', '[]'))
@@ -99,15 +100,20 @@ def evaluacion_create(request, curso_pk):
                         )
             
             messages.success(request, 'Evaluación creada exitosamente.')
-            return redirect('evaluaciones:evaluacion_list', curso_pk=curso_pk)
+            return redirect('cursos:clase_list', pk=curso_pk)
         except Exception as e:
             form.add_error(None, f'Error al guardar la evaluación: {str(e)}')
             context = {'curso': curso, 'form': form}
             return render(request, 'evaluaciones/evaluacion_form.html', context)
     
+    from cursos.models import Clase
+    max_clase = curso.clases.aggregate(max_orden=Max('orden'))['max_orden'] or 0
+    max_eval = curso.evaluaciones.aggregate(max_orden=Max('orden'))['max_orden'] or 0
+    initial_orden = max(max_clase, max_eval) + 1
+
     context = {
         'curso': curso,
-        'form': EvaluacionForm(initial={'porcentaje_aprobacion': 70, 'max_intentos': 0, 'duracion_minutos': None})
+        'form': EvaluacionForm(initial={'orden': initial_orden, 'porcentaje_aprobacion': 70, 'max_intentos': 0, 'duracion_minutos': None}, curso=curso)
     }
     return render(request, 'evaluaciones/evaluacion_form.html', context)
 
@@ -122,7 +128,7 @@ def evaluacion_edit(request, pk):
         return HttpResponseForbidden('No puedes editar evaluaciones de este curso.')
     
     if request.method == 'POST':
-        form = EvaluacionForm(request.POST, instance=evaluacion)
+        form = EvaluacionForm(request.POST, instance=evaluacion, curso=curso)
         
         try:
             preguntas_data = json.loads(request.POST.get('preguntas', '[]'))
@@ -164,7 +170,7 @@ def evaluacion_edit(request, pk):
                         )
             
             messages.success(request, 'Evaluación actualizada.')
-            return redirect('evaluaciones:evaluacion_list', curso_pk=evaluacion.curso.pk)
+            return redirect('cursos:clase_list', pk=evaluacion.curso.pk)
         except Exception as e:
             form.add_error(None, f'Error al guardar la evaluación: {str(e)}')
             context = {
@@ -177,7 +183,7 @@ def evaluacion_edit(request, pk):
     context = {
         'evaluacion': evaluacion,
         'curso': evaluacion.curso,
-        'form': EvaluacionForm(instance=evaluacion),
+        'form': EvaluacionForm(instance=evaluacion, curso=curso),
     }
     return render(request, 'evaluaciones/evaluacion_form.html', context)
 
@@ -192,10 +198,11 @@ def evaluacion_delete(request, pk):
         return HttpResponseForbidden('No puedes eliminar evaluaciones de este curso.')
     
     if request.method == 'POST':
-        curso_pk = evaluacion.curso.pk
+        curso_id = curso.id
+        titulo = evaluacion.titulo
         evaluacion.delete()
-        messages.success(request, 'Evaluación eliminada.')
-        return redirect('evaluaciones:evaluacion_list', curso_pk=curso_pk)
+        messages.success(request, f'Evaluación "{titulo}" eliminada.')
+        return redirect('cursos:clase_list', pk=curso_id)
     
     context = {'evaluacion': evaluacion}
     return render(request, 'evaluaciones/evaluacion_confirm_delete.html', context)

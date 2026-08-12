@@ -134,12 +134,30 @@ def evento_create(request):
             evento.creado_por = request.user
             evento.save()
             messages.success(request, f'Evento "{evento.titulo}" creado exitosamente.')
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('Fetch-Mode') == 'modal':
+                from django.http import JsonResponse
+                return JsonResponse({'status': 'success'})
             return redirect('calendario:calendario')
     else:
         from .forms import EventoCalendarioForm
-        form = EventoCalendarioForm()
+        
+        # Pre-fill date if passed in GET
+        initial_data = {}
+        fecha_str = request.GET.get('fecha')
+        if fecha_str:
+            try:
+                from datetime import datetime, time
+                fecha_obj = datetime.strptime(fecha_str, '%Y-%m-%d')
+                fecha_inicio = datetime.combine(fecha_obj, time(9, 0))
+                fecha_fin = datetime.combine(fecha_obj, time(10, 0))
+                initial_data = {'fecha_inicio': fecha_inicio, 'fecha_fin': fecha_fin}
+            except ValueError:
+                pass
+                
+        form = EventoCalendarioForm(initial=initial_data)
     
-    return render(request, 'calendario/evento_form.html', {'form': form, 'accion': 'crear'})
+    template_name = 'calendario/partials/evento_form_modal.html' if (request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('Fetch-Mode') == 'modal') else 'calendario/evento_form.html'
+    return render(request, template_name, {'form': form, 'accion': 'crear'})
 
 
 @login_required
@@ -157,12 +175,16 @@ def evento_edit(request, pk):
         if form.is_valid():
             form.save()
             messages.success(request, f'Evento "{evento.titulo}" actualizado.')
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('Fetch-Mode') == 'modal':
+                from django.http import JsonResponse
+                return JsonResponse({'status': 'success'})
             return redirect('calendario:calendario')
     else:
         from .forms import EventoCalendarioForm
         form = EventoCalendarioForm(instance=evento)
     
-    return render(request, 'calendario/evento_form.html', {'form': form, 'evento': evento, 'accion': 'editar'})
+    template_name = 'calendario/partials/evento_form_modal.html' if (request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('Fetch-Mode') == 'modal') else 'calendario/evento_form.html'
+    return render(request, template_name, {'form': form, 'evento': evento, 'accion': 'editar'})
 
 
 @login_required

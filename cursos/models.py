@@ -114,9 +114,31 @@ class InscripcionCurso(models.Model):
         return f"{self.usuario} - {self.curso} ({self.get_estado_display()})"
 
 
+class Modulo(models.Model):
+    curso = models.ForeignKey(Curso, on_delete=models.CASCADE, related_name='modulos')
+    titulo = models.CharField(max_length=200)
+    descripcion = models.TextField(blank=True, default='')
+    orden = models.PositiveIntegerField(default=1, help_text='Orden del módulo en el curso')
+
+    class Meta:
+        verbose_name = 'Módulo'
+        verbose_name_plural = 'Módulos'
+        ordering = ['orden']
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(orden__gte=1),
+                name='modulo_orden_minimo'
+            ),
+        ]
+
+    def __str__(self):
+        return f"Módulo {self.orden}: {self.titulo}"
+
+
 class Clase(models.Model):
     """Clase/Lección dentro de un curso - contenido rico con CKEditor"""
     curso = models.ForeignKey(Curso, on_delete=models.CASCADE, related_name='clases')
+    modulo = models.ForeignKey(Modulo, on_delete=models.SET_NULL, null=True, blank=True, related_name='clases')
     titulo = models.CharField(max_length=200)
     contenido = RichTextField(verbose_name='Contenido de la clase')
     orden = models.PositiveIntegerField(default=1, help_text='Orden de la clase en el curso')

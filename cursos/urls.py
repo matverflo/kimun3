@@ -21,6 +21,13 @@ urlpatterns = [
     path('categorias/<int:pk>/editar/', views.categoria_edit, name='categoria_edit'),
     path('categorias/<int:pk>/eliminar/', views.categoria_delete, name='categoria_delete'),
     
+    # Modulo URLs
+    path('<int:pk>/modulos/crear/', views.modulo_create, name='modulo_create'),
+    path('modulos/<int:pk>/editar/', views.modulo_edit, name='modulo_edit'),
+    path('modulos/<int:pk>/editar-inline/', views.modulo_edit_inline, name='modulo_edit_inline'),
+    path('modulos/<int:pk>/eliminar-inline/', views.modulo_delete_inline, name='modulo_delete_inline'),
+    path('modulos/<int:pk>/eliminar/', views.modulo_delete, name='modulo_delete'),
+    
     # Clase (Lección) URLs
     path('<int:pk>/clases/', views.clase_list, name='clase_list'),
     path('<int:pk>/clases/crear/', views.clase_create, name='clase_create'),

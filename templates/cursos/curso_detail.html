@@ -208,12 +208,224 @@
             </div>
         </div>
 
-        <!-- Materiales -->
+
+
+        <!-- Contenido del Curso -->
         <div class="hybrid-card rounded-2xl p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="section-title text-xl font-bold" style="color: var(--color-text);">
+                    <i class="bi bi-collection me-2" style="color: var(--color-primary);"></i>Contenido del Curso
+                </h2>
+                <div class="flex gap-2">
+                    <a href="{% url 'cursos:clase_list' curso.id %}" class="btn-outline px-4 py-2 rounded-xl text-sm">
+                        {% if puede_editar %}
+                        <i class="bi bi-pencil-square me-1"></i>Editar
+                        {% else %}
+                        <i class="bi bi-list-ul me-1"></i>Ver Todo
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+            
+            {% if contenido_agrupado %}
+            <div class="space-y-6">
+                {% for grupo in contenido_agrupado %}
+                    {% if grupo.items or puede_editar %}
+                    <div class="module-group">
+                        {% if grupo.modulo %}
+                        <h3 class="text-lg font-bold mb-3 flex items-center gap-2" style="color: var(--color-text);">
+                            <i class="bi bi-folder2-open" style="color: var(--color-primary);"></i>
+                            {{ grupo.modulo.titulo }}
+                        </h3>
+                        {% if grupo.modulo.descripcion %}
+                        <p class="text-sm mb-3" style="color: var(--color-text-secondary);">{{ grupo.modulo.descripcion }}</p>
+                        {% endif %}
+                        {% else %}
+                        <h3 class="text-lg font-bold mb-3 flex items-center gap-2 mt-4" style="color: var(--color-text-secondary);">
+                            <i class="bi bi-folder-x"></i> Otros Contenidos
+                        </h3>
+                        {% endif %}
+                        
+                        {% if grupo.items %}
+                        <div class="space-y-3 pl-2 border-l-2" style="border-color: var(--color-border);">
+                            {% for ctx in grupo.items|slice:":8" %}
+                            <div class="flex items-center justify-between p-3 rounded-xl transition-opacity {% if ctx.bloqueado %}opacity-50{% endif %}" style="background-color: var(--color-bg);">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center font-semibold text-sm"
+                                         style="background-color: {% if ctx.completado %}var(--color-success){% elif ctx.is_clase %}var(--color-primary){% else %}var(--color-danger){% endif %}; color: white;">
+                                         {% if ctx.bloqueado %}
+                                         <i class="bi bi-lock-fill"></i>
+                                         {% elif ctx.completado %}
+                                         <i class="bi bi-check"></i>
+                                         {% else %}
+                                             {{ ctx.item.orden }}
+                                         {% endif %}
+                                    </div>
+                                    <span style="color: var(--color-text);">
+                                        {{ ctx.item.titulo }}
+                                        {% if not ctx.is_clase %}
+                                        <span class="text-xs ml-2 px-2 py-0.5 rounded-full bg-red-100 text-red-800" style="background-color: var(--color-danger-bg); color: var(--color-danger);">Evaluación</span>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                {% if puede_editar %}
+                                    {% if ctx.is_clase %}
+                                    <a href="{% url 'cursos:clase_edit' pk=ctx.item.id %}" class="w-8 h-8 flex items-center justify-center rounded-lg transition-colors hover:bg-gray-100" style="color: var(--color-primary);" title="Editar">
+                                        <i class="bi bi-pencil-square text-base"></i>
+                                    </a>
+                                    {% else %}
+                                    <a href="{% url 'evaluaciones:evaluacion_edit' pk=ctx.item.id %}" class="w-8 h-8 flex items-center justify-center rounded-lg transition-colors hover:bg-gray-100" style="color: var(--color-primary);" title="Editar">
+                                        <i class="bi bi-pencil-square text-base"></i>
+                                    </a>
+                                    {% endif %}
+                                {% else %}
+                                    {% if ctx.bloqueado %}
+                                    <span class="px-3 py-1.5 rounded-lg text-xs font-medium" style="background-color: var(--color-border); color: var(--color-text-secondary);">
+                                        Bloqueado
+                                    </span>
+                                    {% else %}
+                                        {% if ctx.is_clase %}
+                                        <a href="{% url 'cursos:clase_detail' ctx.item.id %}" class="btn-outline px-3 py-1.5 rounded-lg text-xs hover:bg-gray-50 transition-colors">
+                                            <i class="bi bi-eye me-1"></i>Ver
+                                        </a>
+                                        {% else %}
+                                        <a href="{% url 'evaluaciones:tomar_evaluacion' ctx.item.id %}" class="btn-outline px-3 py-1.5 rounded-lg text-xs hover:bg-gray-50 transition-colors">
+                                            <i class="bi bi-pencil me-1"></i>Rendir
+                                        </a>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm pl-2 py-2" style="color: var(--color-text-secondary);">No hay contenido en este módulo aún.</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            {% if contenido_con_estado|length > 8 %}
+            <div class="mt-6 pt-4 border-t text-center" style="border-color: var(--color-border);">
+                <a href="{% url 'cursos:clase_list' curso.id %}" class="text-sm font-semibold" style="color: var(--color-primary);">
+                    {% if puede_editar %}Editar{% else %}Ver todo el contenido ({{ contenido_con_estado|length }}){% endif %} <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="text-center py-6">
+                <div class="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center" 
+                     style="background-color: var(--color-bg);">
+                    <i class="bi bi-collection text-xl" style="color: var(--color-text-secondary);"></i>
+                </div>
+                <p style="color: var(--color-text-secondary);">
+                    {% if puede_editar %}No hay contenido. Agrega clases y evaluaciones.{% else %}No hay contenido disponible aún.{% endif %}
+                </p>
+            </div>
+            {% endif %}
+            
+            {% if es_colaborador and contenido_con_estado %}
+            <div class="mt-4 pt-4 border-t" style="border-color: var(--color-border);">
+                <div class="flex justify-between text-sm mb-2">
+                    <span style="color: var(--color-text-secondary);">Progreso en contenido</span>
+                    <span class="font-medium" style="color: var(--color-text);">{{ progreso_general }}%</span>
+                </div>
+                <div class="w-full h-2 rounded-full" style="background-color: var(--color-border);">
+                    <div class="h-full rounded-full transition-all duration-300" style="width: {{ progreso_general }}%; background-color: var(--color-success);"></div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Tareas -->
+        <div class="hybrid-card rounded-2xl p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="section-title text-xl font-bold" style="color: var(--color-text);">
+                    <i class="bi bi-journal-check me-2" style="color: var(--color-primary);"></i>Tareas
+                </h2>
+                <div class="flex gap-2">
+                    <a href="{% url 'tareas:tarea_list' curso.id %}" class="btn-outline px-4 py-2 rounded-xl text-sm">
+                        {% if puede_editar %}
+                        <i class="bi bi-pencil-square me-1"></i>Editar
+                        {% else %}
+                        <i class="bi bi-list-ul me-1"></i>Ver Todas
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+            
+            {% if tareas %}
+            <div class="space-y-3">
+                {% for tarea in tareas|slice:":3" %}
+                <div class="flex items-center justify-between p-3 rounded-xl" style="background-color: var(--color-bg);">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center font-semibold text-sm"
+                             style="background-color: var(--color-primary); color: white;">
+                            <i class="bi bi-file-earmark-text"></i>
+                        </div>
+                        <div>
+                            <span class="block text-sm font-medium" style="color: var(--color-text);">{{ tarea.titulo }}</span>
+                            {% if tarea.fecha_limite %}
+                            <span class="text-xs" style="color: var(--color-text-secondary);">
+                                Límite: {{ tarea.fecha_limite|date:"d M Y" }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        {% if es_colaborador %}
+                            {% if tarea.user_entrega %}
+                                {% if tarea.user_entrega.estado == 'calificado' %}
+                                    <span class="text-xs font-medium" style="color: var(--color-success);"><i class="bi bi-check-circle me-1"></i>Calificado</span>
+                                {% elif tarea.user_entrega.estado == 'devuelto' %}
+                                    <span class="text-xs font-medium" style="color: var(--color-danger);"><i class="bi bi-arrow-return-left me-1"></i>Devuelto</span>
+                                {% else %}
+                                    <span class="text-xs font-medium" style="color: var(--color-primary);"><i class="bi bi-send me-1"></i>Enviado</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-xs font-medium" style="color: var(--color-text-secondary);"><i class="bi bi-dash-circle me-1"></i>Pendiente</span>
+                            {% endif %}
+                        {% endif %}
+                        <a href="{% url 'tareas:tarea_detail' tarea.id %}" class="btn-outline px-3 py-1.5 rounded-lg text-xs">
+                            <i class="bi bi-eye me-1"></i>Ver
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% if tareas|length > 3 %}
+            <div class="mt-4 text-center">
+                <a href="{% url 'tareas:tarea_list' curso.id %}" class="text-sm" style="color: var(--color-primary);">
+                    {% if puede_editar %}Editar tareas{% else %}Ver todas las tareas{% endif %} <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="text-center py-6">
+                <div class="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center" 
+                     style="background-color: var(--color-bg);">
+                    <i class="bi bi-journal-x text-xl" style="color: var(--color-text-secondary);"></i>
+                </div>
+                <p style="color: var(--color-text-secondary);">
+                    {% if puede_editar %}No hay tareas. Agrega la primera.{% else %}No hay tareas asignadas aún.{% endif %}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Materiales -->
+        <div class="hybrid-card rounded-2xl p-8 mt-6">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="section-title text-xl font-bold" style="color: var(--color-text);">
                     <i class="bi bi-folder me-2" style="color: var(--color-primary);"></i>Materiales
                 </h2>
+                {% if puede_editar %}
+                <div class="flex gap-2">
+                    <a href="{% url 'cursos:material_create' curso.id %}" class="btn-outline px-4 py-2 rounded-xl text-sm">
+                        <i class="bi bi-plus-lg me-1"></i>Añadir
+                    </a>
+                </div>
+                {% endif %}
             </div>
             
             {% if materiales %}
@@ -262,175 +474,6 @@
                 </div>
                 <p style="color: var(--color-text-secondary);">
                     {% if puede_editar %}No hay materiales. Agrega el primero.{% else %}No hay materiales disponibles aún.{% endif %}
-                </p>
-            </div>
-            {% endif %}
-        </div>
-
-        <!-- Contenido del Curso -->
-        <div class="hybrid-card rounded-2xl p-8">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="section-title text-xl font-bold" style="color: var(--color-text);">
-                    <i class="bi bi-collection me-2" style="color: var(--color-primary);"></i>Contenido del Curso
-                </h2>
-                <div class="flex gap-2">
-                    <a href="{% url 'cursos:clase_list' curso.id %}" class="btn-outline px-4 py-2 rounded-xl text-sm">
-                        <i class="bi bi-list-ul me-1"></i>Ver Todo
-                    </a>
-                </div>
-            </div>
-            
-            {% if contenido_con_estado %}
-            <div class="space-y-3">
-                {% for ctx in contenido_con_estado|slice:":8" %}
-                <div class="flex items-center justify-between p-3 rounded-xl transition-opacity {% if ctx.bloqueado %}opacity-50{% endif %}" style="background-color: var(--color-bg);">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg flex items-center justify-center font-semibold text-sm"
-                             style="background-color: {% if ctx.completado %}var(--color-success){% elif ctx.is_clase %}var(--color-primary){% else %}var(--color-danger){% endif %}; color: white;">
-                             {% if ctx.bloqueado %}
-                             <i class="bi bi-lock-fill"></i>
-                             {% elif ctx.completado %}
-                             <i class="bi bi-check"></i>
-                             {% else %}
-                                 {{ ctx.item.orden }}
-                             {% endif %}
-                        </div>
-                        <span style="color: var(--color-text);">
-                            {{ ctx.item.titulo }}
-                            {% if not ctx.is_clase %}
-                            <span class="text-xs ml-2 px-2 py-0.5 rounded-full bg-red-100 text-red-800" style="background-color: var(--color-danger-bg); color: var(--color-danger);">Evaluación</span>
-                            {% endif %}
-                        </span>
-                    </div>
-                    {% if puede_editar %}
-                        {% if ctx.is_clase %}
-                        <a href="{% url 'cursos:clase_edit' pk=ctx.item.id %}" class="w-8 h-8 flex items-center justify-center rounded-lg transition-colors hover:bg-gray-100" style="color: var(--color-primary);" title="Editar">
-                            <i class="bi bi-pencil-square text-base"></i>
-                        </a>
-                        {% else %}
-                        <a href="{% url 'evaluaciones:evaluacion_edit' pk=ctx.item.id %}" class="w-8 h-8 flex items-center justify-center rounded-lg transition-colors hover:bg-gray-100" style="color: var(--color-primary);" title="Editar">
-                            <i class="bi bi-pencil-square text-base"></i>
-                        </a>
-                        {% endif %}
-                    {% else %}
-                        {% if ctx.bloqueado %}
-                        <span class="px-3 py-1.5 rounded-lg text-xs font-medium" style="background-color: var(--color-border); color: var(--color-text-secondary);">
-                            Bloqueado
-                        </span>
-                        {% else %}
-                            {% if ctx.is_clase %}
-                            <a href="{% url 'cursos:clase_detail' ctx.item.id %}" class="btn-outline px-3 py-1.5 rounded-lg text-xs hover:bg-gray-50 transition-colors">
-                                <i class="bi bi-eye me-1"></i>Ver
-                            </a>
-                            {% else %}
-                            <a href="{% url 'evaluaciones:tomar_evaluacion' ctx.item.id %}" class="btn-outline px-3 py-1.5 rounded-lg text-xs hover:bg-gray-50 transition-colors">
-                                <i class="bi bi-pencil me-1"></i>Rendir
-                            </a>
-                            {% endif %}
-                        {% endif %}
-                    {% endif %}
-                </div>
-                {% endfor %}
-            </div>
-            {% if contenido_con_estado|length > 8 %}
-            <div class="mt-4 text-center">
-                <a href="{% url 'cursos:clase_list' curso.id %}" class="text-sm" style="color: var(--color-primary);">
-                    Ver todo el contenido ({{ contenido_con_estado|length }}) <i class="bi bi-arrow-right ms-1"></i>
-                </a>
-            </div>
-            {% endif %}
-            {% else %}
-            <div class="text-center py-6">
-                <div class="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center" 
-                     style="background-color: var(--color-bg);">
-                    <i class="bi bi-collection text-xl" style="color: var(--color-text-secondary);"></i>
-                </div>
-                <p style="color: var(--color-text-secondary);">
-                    {% if puede_editar %}No hay contenido. Agrega clases y evaluaciones.{% else %}No hay contenido disponible aún.{% endif %}
-                </p>
-            </div>
-            {% endif %}
-            
-            {% if es_colaborador and contenido_con_estado %}
-            <div class="mt-4 pt-4 border-t" style="border-color: var(--color-border);">
-                <div class="flex justify-between text-sm mb-2">
-                    <span style="color: var(--color-text-secondary);">Progreso en contenido</span>
-                    <span class="font-medium" style="color: var(--color-text);">{{ progreso_general }}%</span>
-                </div>
-                <div class="w-full h-2 rounded-full" style="background-color: var(--color-border);">
-                    <div class="h-full rounded-full transition-all duration-300" style="width: {{ progreso_general }}%; background-color: var(--color-success);"></div>
-                </div>
-            </div>
-            {% endif %}
-        </div>
-
-        <!-- Tareas -->
-        <div class="hybrid-card rounded-2xl p-8">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="section-title text-xl font-bold" style="color: var(--color-text);">
-                    <i class="bi bi-journal-check me-2" style="color: var(--color-primary);"></i>Tareas
-                </h2>
-                <div class="flex gap-2">
-                    <a href="{% url 'tareas:tarea_list' curso.id %}" class="btn-outline px-4 py-2 rounded-xl text-sm">
-                        <i class="bi bi-list-ul me-1"></i>Ver Todas
-                    </a>
-                </div>
-            </div>
-            
-            {% if tareas %}
-            <div class="space-y-3">
-                {% for tarea in tareas|slice:":3" %}
-                <div class="flex items-center justify-between p-3 rounded-xl" style="background-color: var(--color-bg);">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg flex items-center justify-center font-semibold text-sm"
-                             style="background-color: var(--color-primary); color: white;">
-                            <i class="bi bi-file-earmark-text"></i>
-                        </div>
-                        <div>
-                            <span class="block text-sm font-medium" style="color: var(--color-text);">{{ tarea.titulo }}</span>
-                            {% if tarea.fecha_limite %}
-                            <span class="text-xs" style="color: var(--color-text-secondary);">
-                                Límite: {{ tarea.fecha_limite|date:"d M Y" }}
-                            </span>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        {% if es_colaborador %}
-                            {% if tarea.user_entrega %}
-                                {% if tarea.user_entrega.estado == 'calificado' %}
-                                    <span class="text-xs font-medium" style="color: var(--color-success);"><i class="bi bi-check-circle me-1"></i>Calificado</span>
-                                {% elif tarea.user_entrega.estado == 'devuelto' %}
-                                    <span class="text-xs font-medium" style="color: var(--color-danger);"><i class="bi bi-arrow-return-left me-1"></i>Devuelto</span>
-                                {% else %}
-                                    <span class="text-xs font-medium" style="color: var(--color-primary);"><i class="bi bi-send me-1"></i>Enviado</span>
-                                {% endif %}
-                            {% else %}
-                                <span class="text-xs font-medium" style="color: var(--color-text-secondary);"><i class="bi bi-dash-circle me-1"></i>Pendiente</span>
-                            {% endif %}
-                        {% endif %}
-                        <a href="{% url 'tareas:tarea_detail' tarea.id %}" class="btn-outline px-3 py-1.5 rounded-lg text-xs">
-                            <i class="bi bi-eye me-1"></i>Ver
-                        </a>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            {% if tareas|length > 3 %}
-            <div class="mt-4 text-center">
-                <a href="{% url 'tareas:tarea_list' curso.id %}" class="text-sm" style="color: var(--color-primary);">
-                    Ver todas las tareas <i class="bi bi-arrow-right ms-1"></i>
-                </a>
-            </div>
-            {% endif %}
-            {% else %}
-            <div class="text-center py-6">
-                <div class="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center" 
-                     style="background-color: var(--color-bg);">
-                    <i class="bi bi-journal-x text-xl" style="color: var(--color-text-secondary);"></i>
-                </div>
-                <p style="color: var(--color-text-secondary);">
-                    {% if puede_editar %}No hay tareas. Agrega la primera.{% else %}No hay tareas asignadas aún.{% endif %}
                 </p>
             </div>
             {% endif %}

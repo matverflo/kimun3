@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load form_tags %}
+
+{% block title %}{% if accion == 'crear' %}Crear Módulo{% else %}Editar Módulo{% endif %} - Kimün{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex items-center gap-2 text-sm text-secondary mb-4">
+        <a href="{% url 'cursos:curso_gestion' pk=curso.id %}" class="hover:text-primary transition-colors">Gestión del Curso</a>
+        <i class="bi bi-chevron-right text-xs"></i>
+        <span class="text-primary font-medium">{% if accion == 'crear' %}Crear Módulo{% else %}Editar Módulo{% endif %}</span>
+    </div>
+    
+    <h1 class="section-title">
+        <i class="bi bi-folder-plus me-2 text-primary"></i>
+        {% if accion == 'crear' %}Crear Nuevo Módulo{% else %}Editar Módulo{% endif %}
+    </h1>
+    <p class="mt-1 text-secondary">
+        {{ curso.titulo }}
+    </p>
+</div>
+
+<div class="hybrid-card rounded-2xl p-8 max-w-3xl">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="mb-6">
+            <label class="block text-base font-medium mb-2">
+                Título del Módulo <span class="text-red-500">*</span>
+            </label>
+            {{ form.titulo }}
+            {% if form.titulo.errors %}
+            <p class="mt-2 text-sm text-red-500">{{ form.titulo.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <div class="mb-6">
+            <label class="block text-base font-medium mb-2">
+                Descripción
+            </label>
+            {{ form.descripcion }}
+            <p class="mt-2 text-sm text-secondary">Opcional. Una breve descripción del contenido de este módulo.</p>
+            {% if form.descripcion.errors %}
+            <p class="mt-2 text-sm text-red-500">{{ form.descripcion.errors.0 }}</p>
+            {% endif %}
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-base font-medium mb-2">
+                Orden <span class="text-red-500">*</span>
+            </label>
+            {{ form.orden }}
+            <p class="mt-2 text-sm text-secondary">
+                Determina la posición del módulo dentro del curso.
+            </p>
+            {% if form.orden.errors %}
+            <p class="mt-2 text-sm text-red-500">{{ form.orden.errors.0 }}</p>
+            {% endif %}
+        </div>
+        
+        <div class="flex gap-4">
+            <button type="submit" class="btn-primary px-6 py-3 rounded-xl font-medium">
+                <i class="bi bi-check-lg me-2"></i>
+                {% if accion == 'crear' %}Crear Módulo{% else %}Guardar Cambios{% endif %}
+            </button>
+            <a href="{% url 'cursos:curso_gestion' pk=curso.id %}" class="btn-outline px-6 py-3 rounded-xl font-medium inline-block">
+                <i class="bi bi-x-lg me-2"></i>Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
