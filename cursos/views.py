@@ -258,6 +258,12 @@ def curso_detail(request, pk):
             
         if tiempo_progress > 100:
             tiempo_progress = 100
+            
+    minutos_faltantes = 0
+    if curso.horas_exigidas:
+        min_req = curso.horas_exigidas * 60
+        if min_req > tiempo_invertido_minutos:
+            minutos_faltantes = min_req - tiempo_invertido_minutos
     
     puede_editar = False
     if not simular_estudiante:
@@ -283,6 +289,7 @@ def curso_detail(request, pk):
         'total_evals': total_evals,
         'tiempo_invertido_minutos': tiempo_invertido_minutos,
         'tiempo_progress': tiempo_progress,
+        'minutos_faltantes': minutos_faltantes,
         'next_uncompleted': next_uncompleted,
         'simular_estudiante': simular_estudiante,
         'es_colaborador': es_colaborador,
@@ -646,8 +653,10 @@ def clase_create(request, pk):
             except IntegrityError:
                 form.add_error('orden', 'Ya existe una clase con ese orden en el curso.')
     else:
-        max_orden = curso.clases.aggregate(max_orden=Max('orden'))['max_orden'] or 0
-        initial_orden = max_orden + 1
+        from evaluaciones.models import Evaluacion
+        max_clase = curso.clases.aggregate(max_orden=Max('orden'))['max_orden'] or 0
+        max_eval = curso.evaluaciones.aggregate(max_orden=Max('orden'))['max_orden'] or 0
+        initial_orden = max(max_clase, max_eval) + 1
         form = ClaseForm(initial={'orden': initial_orden})
     
     return render(request, 'cursos/clase_form.html', {
