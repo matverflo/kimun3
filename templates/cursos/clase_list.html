@@ -85,8 +85,8 @@
                             <i class="bi bi-grip-vertical"></i>
                         </div>
                         {% endif %}
-                        <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold orden-badge"
-                             style="background-color: {% if ctx.completado %}var(--color-success){% elif ctx.is_clase %}var(--color-primary){% else %}var(--color-danger){% endif %}; color: white;">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold orden-badge {% if ctx.completado %}bg-green-500{% elif ctx.is_clase %}bg-blue-600{% else %}bg-red-500{% endif %}"
+                             style="color: white;">
                              {% if ctx.bloqueado %}
                              <i class="bi bi-lock-fill"></i>
                              {% elif ctx.completado %}
