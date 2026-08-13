@@ -251,8 +251,8 @@
                             {% for ctx in grupo.items|slice:":8" %}
                             <div class="flex items-center justify-between p-3 rounded-xl transition-opacity {% if ctx.bloqueado %}opacity-50{% endif %}" style="background-color: var(--color-bg);">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center font-semibold text-sm"
-                                         style="background-color: {% if ctx.completado %}var(--color-success){% elif ctx.is_clase %}var(--color-primary){% else %}var(--color-danger){% endif %}; color: white;">
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center font-semibold text-sm {% if ctx.completado %}bg-green-500{% elif ctx.is_clase %}bg-blue-600{% else %}bg-red-500{% endif %}"
+                                         style="color: white;">
                                          {% if ctx.bloqueado %}
                                          <i class="bi bi-lock-fill"></i>
                                          {% elif ctx.completado %}
