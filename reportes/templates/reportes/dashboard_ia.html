@@ -503,8 +503,13 @@
         // Botones "Asignar" en lista de pacientes
         document.querySelectorAll('a[href*="sugerencia-ia"]').forEach(btn => {
             btn.addEventListener('click', function(e) {
-                e.preventDefault();
                 const href = this.href;
+                if (href.includes('reporte_id')) {
+                    // Es un link histórico, no mostrar modal
+                    return;
+                }
+                
+                e.preventDefault();
                 showLoadingModal("Analizando el perfil del paciente y buscando el mejor cuidador...");
                 setTimeout(() => { window.location.href = href; }, 150);
             });
