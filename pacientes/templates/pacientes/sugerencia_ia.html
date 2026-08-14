@@ -144,4 +144,34 @@
     
     {% endif %}
 </div>
+
+<!-- Modal de Carga -->
+<div id="assign-modal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 flex flex-col items-center gap-5 border" style="border-color: var(--color-border);">
+        <div class="relative w-20 h-20">
+            <div class="w-20 h-20 rounded-full border-4 border-gray-200 dark:border-slate-700 absolute inset-0"></div>
+            <div class="w-20 h-20 rounded-full border-4 border-transparent border-t-emerald-500 absolute inset-0 animate-spin"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <i class="bi bi-person-check text-2xl text-emerald-500"></i>
+            </div>
+        </div>
+        <div class="text-center">
+            <h3 class="text-lg font-bold mb-1" style="color: var(--color-text);">Asignando Cuidador</h3>
+            <p class="text-sm" style="color: var(--color-text-secondary);">Guardando la asignación en el sistema...</p>
+        </div>
+        <div class="w-full bg-gray-100 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
+            <div class="h-full bg-emerald-500 rounded-full animate-pulse" style="width: 100%;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('form[action*="sugerencia_ia"]').forEach(form => {
+        form.addEventListener('submit', function() {
+            const modal = document.getElementById('assign-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        });
+    });
+</script>
 {% endblock %}

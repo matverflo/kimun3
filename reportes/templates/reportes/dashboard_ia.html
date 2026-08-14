@@ -272,21 +272,87 @@
     {% endif %}
 </div>
 
-<!-- Script para el loading manual de clics en las tarjetas -->
+<!-- Modal de Carga IA -->
+<div id="ia-loading-modal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 flex flex-col items-center gap-5 border" style="border-color: var(--color-border);">
+        <!-- Spinner animado -->
+        <div class="relative w-20 h-20">
+            <div class="w-20 h-20 rounded-full border-4 border-gray-200 dark:border-slate-700 absolute inset-0"></div>
+            <div class="w-20 h-20 rounded-full border-4 border-transparent border-t-blue-500 absolute inset-0 animate-spin"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <i class="bi bi-robot text-2xl text-blue-500"></i>
+            </div>
+        </div>
+        <!-- Texto -->
+        <div class="text-center">
+            <h3 class="text-lg font-bold mb-1" style="color: var(--color-text);">Analizando con IA</h3>
+            <p id="ia-loading-msg" class="text-sm" style="color: var(--color-text-secondary);">Consultando el modelo de inteligencia artificial...</p>
+        </div>
+        <!-- Barra de progreso animada -->
+        <div class="w-full bg-gray-100 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
+            <div class="h-full bg-blue-500 rounded-full animate-pulse" style="width: 100%;"></div>
+        </div>
+        <p class="text-xs text-gray-400 dark:text-slate-500">Este proceso puede tomar hasta 30 segundos.</p>
+    </div>
+</div>
+
 <script>
+    const modal = document.getElementById('ia-loading-modal');
+    const loadingMsg = document.getElementById('ia-loading-msg');
+
+    const messages = [
+        "Analizando patologías de los pacientes...",
+        "Revisando el catálogo de cursos disponibles...",
+        "Evaluando capacitaciones del personal...",
+        "Generando recomendaciones con IA...",
+        "Preparando el diagnóstico institucional...",
+    ];
+
+    function showLoadingModal(msg) {
+        loadingMsg.textContent = msg || messages[0];
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        // Rotar mensajes cada 4s
+        let i = 1;
+        window._iaInterval = setInterval(() => {
+            loadingMsg.textContent = messages[i % messages.length];
+            i++;
+        }, 4000);
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
-        const cards = document.querySelectorAll('.cursor-pointer');
+        // Botones de análisis (upskilling y nuevos_cursos)
+        const cards = document.querySelectorAll('.cursor-pointer[onclick]');
         cards.forEach(card => {
             card.addEventListener('click', function(e) {
-                // Prevenir múltiples clics
                 if (this.classList.contains('opacity-50')) return;
-                
-                // Efecto de carga en la tarjeta
                 this.classList.add('opacity-50', 'pointer-events-none');
-                const btn = this.querySelector('button');
-                if(btn) {
-                    btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin"></i> Analizando...';
+
+                const href = this.getAttribute('onclick');
+                // Solo mostrar spinner para análisis de IA (no pacientes)
+                if (href && (href.includes('upskilling') || href.includes('nuevos_cursos'))) {
+                    e.preventDefault();
+                    const url = href.match(/href='([^']+)'/);
+                    showLoadingModal();
+                    setTimeout(() => {
+                        window.location.href = url ? url[1] : '#';
+                    }, 200);
                 }
+            });
+        });
+
+        // Botón "Asignar" para pacientes individuales
+        document.querySelectorAll('a[href*="sugerencia_ia"]').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const href = this.href;
+                this.innerHTML = '<i class="bi bi-arrow-repeat animate-spin"></i> Analizando...';
+                this.classList.add('opacity-75', 'pointer-events-none');
+                showLoadingModal("Analizando el perfil del paciente y buscando el mejor cuidador...");
+                setTimeout(() => {
+                    window.location.href = href;
+                }, 200);
             });
         });
     });
