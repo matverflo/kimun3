@@ -357,8 +357,8 @@ def dashboard_ia(request):
                     pass
             
             resultado_ia['upskilling'] = filtered_upskilling
-            context['resultado_ia'] = resultado_ia
-        
+            
+        context['resultado_ia'] = resultado_ia
     elif tipo == 'pacientes':
         from pacientes.models import Paciente
         context['pacientes'] = Paciente.objects.all()
