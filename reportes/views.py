@@ -317,8 +317,8 @@ def dashboard_ia(request):
                 else:
                     reporte = ReporteNuevosCursos.objects.create(datos_json=resultado_ia)
                 
-                from django.shortcuts import redirect
-                return redirect(f"?tipo={tipo}&reporte_id={reporte.id}")
+                from django.http import HttpResponseRedirect
+                return HttpResponseRedirect(f"?tipo={tipo}&reporte_id={reporte.id}")
             else:
                 fecha_generacion = None
         

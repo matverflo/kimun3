@@ -564,8 +564,8 @@ def sugerencia_ia(request, paciente_id):
                 paciente=paciente,
                 datos_json=resultado_ia
             )
-            from django.shortcuts import redirect
-            return redirect(f"?reporte_id={reporte.id}")
+            from django.http import HttpResponseRedirect
+            return HttpResponseRedirect(f"?reporte_id={reporte.id}")
         else:
             fecha_generacion = None
     
