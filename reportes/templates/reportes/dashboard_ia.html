@@ -28,7 +28,7 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
         
         <!-- Opción 0: Asignación de Paciente -->
-        <div class="bg-white dark:bg-slate-800 border rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all flex flex-col items-center text-center group cursor-pointer" style="border-color: var(--color-border);" onclick="window.location.href='?tipo=pacientes'">
+        <div class="bg-white dark:bg-slate-800 border rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all flex flex-col items-center text-center group cursor-pointer" style="border-color: var(--color-border);" data-url="?tipo=pacientes">
             <div class="w-20 h-20 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 flex items-center justify-center text-4xl mb-6 group-hover:scale-110 transition-transform">
                 <i class="bi bi-person-heart"></i>
             </div>
@@ -42,7 +42,7 @@
         </div>
         
         <!-- Opción 1: Upskilling -->
-        <div class="bg-white dark:bg-slate-800 border rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all flex flex-col items-center text-center group cursor-pointer" style="border-color: var(--color-border);" onclick="window.location.href='?tipo=upskilling'">
+        <div class="bg-white dark:bg-slate-800 border rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all flex flex-col items-center text-center group cursor-pointer" style="border-color: var(--color-border);" data-url="?tipo=upskilling" data-ia="true">
             <div class="w-20 h-20 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-500 flex items-center justify-center text-4xl mb-6 group-hover:scale-110 transition-transform">
                 <i class="bi bi-person-fill-up"></i>
             </div>
@@ -56,7 +56,7 @@
         </div>
         
         <!-- Opción 2: Nuevos Cursos -->
-        <div class="bg-white dark:bg-slate-800 border rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all flex flex-col items-center text-center group cursor-pointer" style="border-color: var(--color-border);" onclick="window.location.href='?tipo=nuevos_cursos'">
+        <div class="bg-white dark:bg-slate-800 border rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all flex flex-col items-center text-center group cursor-pointer" style="border-color: var(--color-border);" data-url="?tipo=nuevos_cursos" data-ia="true">
             <div class="w-20 h-20 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-500 flex items-center justify-center text-4xl mb-6 group-hover:scale-110 transition-transform">
                 <i class="bi bi-node-plus-fill"></i>
             </div>
@@ -317,6 +317,27 @@
             loadingMsg.textContent = messages[i % messages.length];
             i++;
         }, 4000);
+<script>
+    const modal = document.getElementById('ia-loading-modal');
+    const loadingMsg = document.getElementById('ia-loading-msg');
+
+    const messages = [
+        "Analizando patologías de los pacientes...",
+        "Revisando el catálogo de cursos disponibles...",
+        "Evaluando capacitaciones del personal...",
+        "Generando recomendaciones con IA...",
+        "Preparando el diagnóstico institucional...",
+    ];
+
+    function showLoadingModal(msg) {
+        loadingMsg.textContent = msg || messages[0];
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        let i = 1;
+        window._iaInterval = setInterval(() => {
+            loadingMsg.textContent = messages[i % messages.length];
+            i++;
+        }, 4000);
     }
 
     function hideLoadingModal() {
@@ -328,17 +349,11 @@
     // ✅ Fix: limpiar estado al volver con botón atrás (bfcache)
     window.addEventListener('pageshow', function(e) {
         hideLoadingModal();
-        document.querySelectorAll('.cursor-pointer').forEach(card => {
+        document.querySelectorAll('.cursor-pointer[data-url]').forEach(card => {
             card.classList.remove('opacity-50', 'pointer-events-none');
             const btn = card.querySelector('button');
-            if (btn) {
-                // Restaurar texto original del botón
-                if (btn.textContent.includes('Analizando')) {
-                    const isUpskilling = card.getAttribute('onclick')?.includes('upskilling');
-                    btn.innerHTML = isUpskilling
-                        ? 'Ejecutar Análisis <i class="bi bi-magic"></i>'
-                        : 'Ejecutar Análisis <i class="bi bi-magic"></i>';
-                }
+            if (btn && btn.textContent.includes('Analizando')) {
+                btn.innerHTML = 'Ejecutar Análisis <i class="bi bi-magic"></i>';
             }
         });
         document.querySelectorAll('a[href*="sugerencia_ia"]').forEach(btn => {
@@ -348,23 +363,20 @@
     });
 
     document.addEventListener("DOMContentLoaded", function() {
-        // Tarjetas de análisis (upskilling y nuevos_cursos)
-        document.querySelectorAll('.cursor-pointer[onclick]').forEach(card => {
-            card.addEventListener('click', function(e) {
+        // Tarjetas de análisis con data-url
+        document.querySelectorAll('.cursor-pointer[data-url]').forEach(card => {
+            card.addEventListener('click', function() {
                 if (this.classList.contains('opacity-50')) return;
-
-                const onclickVal = this.getAttribute('onclick');
-                if (onclickVal && (onclickVal.includes('upskilling') || onclickVal.includes('nuevos_cursos'))) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const match = onclickVal.match(/href='([^']+)'/);
-                    if (match) {
-                        this.classList.add('opacity-50', 'pointer-events-none');
-                        const btn = this.querySelector('button');
-                        if (btn) btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin"></i> Analizando...';
-                        showLoadingModal();
-                        setTimeout(() => { window.location.href = match[1]; }, 150);
-                    }
+                const url = this.dataset.url;
+                const isIa = this.dataset.ia === 'true';
+                this.classList.add('opacity-50', 'pointer-events-none');
+                if (isIa) {
+                    const btn = this.querySelector('button');
+                    if (btn) btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin"></i> Analizando...';
+                    showLoadingModal();
+                    setTimeout(() => { window.location.href = url; }, 150);
+                } else {
+                    window.location.href = url;
                 }
             });
         });
