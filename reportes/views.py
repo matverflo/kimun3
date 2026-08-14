@@ -282,17 +282,31 @@ def dashboard_ia(request):
     
     context = {'tipo_seleccionado': tipo}
     
+    if not tipo:
+        from pacientes.models import ReporteAsignacionIA
+        from .models import ReporteUpskilling, ReporteNuevosCursos
+        context['historial_asignacion'] = ReporteAsignacionIA.objects.select_related('paciente').all()[:50]
+        context['historial_upskilling'] = ReporteUpskilling.objects.all()[:50]
+        context['historial_nuevos_cursos'] = ReporteNuevosCursos.objects.all()[:50]
+    
     if tipo in ['upskilling', 'nuevos_cursos']:
         from .services import obtener_analisis_institucional
         from .models import ReporteUpskilling, ReporteNuevosCursos
         
         regenerar = request.GET.get('regenerar') == 'true'
+        reporte_id = request.GET.get('reporte_id')
         reporte = None
         
-        if tipo == 'upskilling':
-            reporte = ReporteUpskilling.objects.first()
+        if reporte_id:
+            if tipo == 'upskilling':
+                reporte = ReporteUpskilling.objects.filter(id=reporte_id).first()
+            else:
+                reporte = ReporteNuevosCursos.objects.filter(id=reporte_id).first()
         else:
-            reporte = ReporteNuevosCursos.objects.first()
+            if tipo == 'upskilling':
+                reporte = ReporteUpskilling.objects.first()
+            else:
+                reporte = ReporteNuevosCursos.objects.first()
             
         if reporte and not regenerar:
             resultado_ia = reporte.datos_json

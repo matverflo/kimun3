@@ -70,6 +70,120 @@
         </div>
         
     </div>
+    
+    <!-- Historial de Reportes Anteriores -->
+    <div class="mt-8 mb-12" x-data="{ activeTab: 'asignacion' }">
+        <div class="flex items-center gap-2 mb-6 border-b pb-3" style="border-color: var(--color-border);">
+            <i class="bi bi-clock-history text-2xl text-gray-400"></i>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Reportes Anteriores</h3>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="inline-flex rounded-lg p-1 mb-6" style="background-color: var(--color-surface-raised)" role="tablist">
+            <button @click="activeTab = 'asignacion'"
+                    :class="activeTab === 'asignacion' ? 'bg-white shadow-sm dark:bg-slate-700 text-blue-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'"
+                    class="px-6 py-2 rounded-md text-sm font-semibold transition-all">
+                Asignación Pacientes
+            </button>
+            <button @click="activeTab = 'upskilling'"
+                    :class="activeTab === 'upskilling' ? 'bg-white shadow-sm dark:bg-slate-700 text-blue-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'"
+                    class="px-6 py-2 rounded-md text-sm font-semibold transition-all">
+                Análisis Upskilling
+            </button>
+            <button @click="activeTab = 'nuevos'"
+                    :class="activeTab === 'nuevos' ? 'bg-white shadow-sm dark:bg-slate-700 text-blue-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'"
+                    class="px-6 py-2 rounded-md text-sm font-semibold transition-all">
+                Nuevos Cursos
+            </button>
+        </div>
+
+        <!-- Tab: Asignacion -->
+        <div x-show="activeTab === 'asignacion'" style="display: none;">
+            <div class="bg-white dark:bg-slate-800 border rounded-xl overflow-hidden shadow-sm" style="border-color: var(--color-border);">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 dark:bg-slate-800/50 border-b" style="border-color: var(--color-border);">
+                        <tr class="text-xs uppercase tracking-wider text-gray-500 font-semibold">
+                            <th class="px-6 py-4">Fecha</th>
+                            <th class="px-6 py-4">Paciente</th>
+                            <th class="px-6 py-4 text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y" style="border-color: var(--color-border);">
+                        {% for rep in historial_asignacion %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
+                            <td class="px-6 py-4 font-medium text-sm text-gray-700 dark:text-gray-300">{{ rep.fecha_generacion|date:"d M Y, H:i" }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{{ rep.paciente.nombre_completo }}</td>
+                            <td class="px-6 py-4 text-center">
+                                <a href="{% url 'pacientes:sugerencia_ia' rep.paciente.id %}?reporte_id={{ rep.id }}" class="px-3 py-1.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 text-sm font-bold inline-flex items-center gap-2 transition-colors">
+                                    <i class="bi bi-eye"></i> Acceder
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="px-6 py-8 text-center text-gray-500">No hay reportes de pacientes registrados.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab: Upskilling -->
+        <div x-show="activeTab === 'upskilling'" style="display: none;">
+            <div class="bg-white dark:bg-slate-800 border rounded-xl overflow-hidden shadow-sm" style="border-color: var(--color-border);">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 dark:bg-slate-800/50 border-b" style="border-color: var(--color-border);">
+                        <tr class="text-xs uppercase tracking-wider text-gray-500 font-semibold">
+                            <th class="px-6 py-4">Fecha de Análisis</th>
+                            <th class="px-6 py-4 text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y" style="border-color: var(--color-border);">
+                        {% for rep in historial_upskilling %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
+                            <td class="px-6 py-4 font-medium text-sm text-gray-700 dark:text-gray-300">{{ rep.fecha_generacion|date:"d M Y, H:i" }}</td>
+                            <td class="px-6 py-4 text-center">
+                                <a href="?tipo=upskilling&reporte_id={{ rep.id }}" class="px-3 py-1.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 text-sm font-bold inline-flex items-center gap-2 transition-colors">
+                                    <i class="bi bi-eye"></i> Acceder
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="2" class="px-6 py-8 text-center text-gray-500">No hay análisis de upskilling registrados.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab: Nuevos Cursos -->
+        <div x-show="activeTab === 'nuevos'" style="display: none;">
+            <div class="bg-white dark:bg-slate-800 border rounded-xl overflow-hidden shadow-sm" style="border-color: var(--color-border);">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 dark:bg-slate-800/50 border-b" style="border-color: var(--color-border);">
+                        <tr class="text-xs uppercase tracking-wider text-gray-500 font-semibold">
+                            <th class="px-6 py-4">Fecha de Análisis</th>
+                            <th class="px-6 py-4 text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y" style="border-color: var(--color-border);">
+                        {% for rep in historial_nuevos_cursos %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
+                            <td class="px-6 py-4 font-medium text-sm text-gray-700 dark:text-gray-300">{{ rep.fecha_generacion|date:"d M Y, H:i" }}</td>
+                            <td class="px-6 py-4 text-center">
+                                <a href="?tipo=nuevos_cursos&reporte_id={{ rep.id }}" class="px-3 py-1.5 rounded bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 text-sm font-bold inline-flex items-center gap-2 transition-colors">
+                                    <i class="bi bi-eye"></i> Acceder
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="2" class="px-6 py-8 text-center text-gray-500">No hay análisis de nuevos cursos registrados.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
     {% endif %}
 
     <!-- Resultados -->
@@ -264,7 +378,30 @@
                             </p>
                         </div>
                         
-                        <div class="ml-4 shrink-0">
+                        <div class="ml-4 shrink-0 flex items-center gap-2">
+                            <!-- Dropdown Historial con AlpineJS -->
+                            <div x-data="{ openHistorial: false }" class="relative">
+                                <button @click="openHistorial = !openHistorial" @click.away="openHistorial = false" class="inline-flex justify-center items-center gap-2 py-2 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-gray-300 text-sm font-bold transition-colors">
+                                    <i class="bi bi-clock-history"></i> Historial <span class="bg-gray-200 dark:bg-slate-600 px-1.5 rounded text-xs">{{ p.reportes_ia.count }}</span>
+                                </button>
+                                
+                                <div x-show="openHistorial" style="display: none;" class="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-800 rounded-xl shadow-lg border z-50 overflow-hidden" style="border-color: var(--color-border);">
+                                    <div class="bg-gray-50 dark:bg-slate-700/50 px-4 py-2 border-b text-xs font-bold text-gray-500 uppercase tracking-wider" style="border-color: var(--color-border);">
+                                        Reportes Anteriores
+                                    </div>
+                                    <div class="max-h-60 overflow-y-auto">
+                                        {% for rep in p.reportes_ia.all %}
+                                        <a href="{% url 'pacientes:sugerencia_ia' p.id %}?reporte_id={{ rep.id }}" class="block px-4 py-3 border-b last:border-0 hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors" style="border-color: var(--color-border);">
+                                            <div class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ rep.fecha_generacion|date:"d M Y" }}</div>
+                                            <div class="text-xs text-gray-500">{{ rep.fecha_generacion|date:"H:i" }}</div>
+                                        </a>
+                                        {% empty %}
+                                        <div class="px-4 py-4 text-center text-sm text-gray-500">No hay reportes.</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <a href="{% url 'pacientes:sugerencia_ia' p.id %}" class="inline-flex justify-center items-center gap-2 py-2 px-4 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 dark:text-emerald-300 text-sm font-bold transition-colors">
                                 <i class="bi bi-robot"></i> Asignar
                             </a>

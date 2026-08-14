@@ -546,7 +546,12 @@ def sugerencia_ia(request, paciente_id):
     from .models import ReporteAsignacionIA
     
     regenerar = request.GET.get('regenerar') == 'true'
-    reporte = ReporteAsignacionIA.objects.filter(paciente=paciente).first()
+    reporte_id = request.GET.get('reporte_id')
+    
+    if reporte_id:
+        reporte = ReporteAsignacionIA.objects.filter(id=reporte_id, paciente=paciente).first()
+    else:
+        reporte = ReporteAsignacionIA.objects.filter(paciente=paciente).first()
 
     if reporte and not regenerar:
         resultado_ia = reporte.datos_json
