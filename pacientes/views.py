@@ -542,12 +542,30 @@ def sugerencia_ia(request, paciente_id):
                 messages.success(request, f'¡{colaborador.get_full_name()} asignado exitosamente al paciente vía IA!')
         return redirect('pacientes:expediente_paciente', paciente_id=paciente_id)
     
-    # Es un GET, llamamos a la IA
-    resultado_ia = obtener_sugerencia_asignacion(paciente_id)
+    # Es un GET, llamamos a la IA o usamos el caché
+    from .models import ReporteAsignacionIA
+    
+    regenerar = request.GET.get('regenerar') == 'true'
+    reporte = ReporteAsignacionIA.objects.filter(paciente=paciente).first()
+
+    if reporte and not regenerar:
+        resultado_ia = reporte.datos_json
+        fecha_generacion = reporte.fecha_generacion
+    else:
+        resultado_ia = obtener_sugerencia_asignacion(paciente_id)
+        if not resultado_ia.get('error'):
+            reporte = ReporteAsignacionIA.objects.create(
+                paciente=paciente,
+                datos_json=resultado_ia
+            )
+            fecha_generacion = reporte.fecha_generacion
+        else:
+            fecha_generacion = None
     
     context = {
         'paciente': paciente,
-        'resultado_ia': resultado_ia
+        'resultado_ia': resultado_ia,
+        'fecha_generacion': fecha_generacion
     }
     return render(request, 'pacientes/sugerencia_ia.html', context)
 

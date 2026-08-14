@@ -82,3 +82,11 @@ class RegistroRutinaDiaria(models.Model):
 
     def __str__(self):
         return f"Completado: {self.receta.titulo} - {self.fecha_completada.strftime('%d/%m/%Y')}"
+
+class ReporteAsignacionIA(models.Model):
+    paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name='reportes_ia')
+    fecha_generacion = models.DateTimeField(auto_now_add=True)
+    datos_json = models.JSONField()
+
+    class Meta:
+        ordering = ['-fecha_generacion']

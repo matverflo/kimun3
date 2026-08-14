@@ -284,8 +284,31 @@ def dashboard_ia(request):
     
     if tipo in ['upskilling', 'nuevos_cursos']:
         from .services import obtener_analisis_institucional
-        resultado_ia = obtener_analisis_institucional(tipo)
+        from .models import ReporteUpskilling, ReporteNuevosCursos
         
+        regenerar = request.GET.get('regenerar') == 'true'
+        reporte = None
+        
+        if tipo == 'upskilling':
+            reporte = ReporteUpskilling.objects.first()
+        else:
+            reporte = ReporteNuevosCursos.objects.first()
+            
+        if reporte and not regenerar:
+            resultado_ia = reporte.datos_json
+            fecha_generacion = reporte.fecha_generacion
+        else:
+            resultado_ia = obtener_analisis_institucional(tipo)
+            if not resultado_ia.get('error'):
+                if tipo == 'upskilling':
+                    reporte = ReporteUpskilling.objects.create(datos_json=resultado_ia)
+                else:
+                    reporte = ReporteNuevosCursos.objects.create(datos_json=resultado_ia)
+                fecha_generacion = reporte.fecha_generacion
+            else:
+                fecha_generacion = None
+        
+        context['fecha_generacion'] = fecha_generacion
         if tipo == 'upskilling' and not resultado_ia.get('error'):
             from django.db.models import Count, Q
             from usuarios.models import Usuario

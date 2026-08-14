@@ -19,3 +19,17 @@ class RegistroSesionArt33(models.Model):
 
     def __str__(self):
         return f"{self.usuario} - {self.modulo_visitado} - {self.fecha_entrada.strftime('%d/%m/%Y')}"
+
+class ReporteUpskilling(models.Model):
+    fecha_generacion = models.DateTimeField(auto_now_add=True)
+    datos_json = models.JSONField()
+
+    class Meta:
+        ordering = ['-fecha_generacion']
+
+class ReporteNuevosCursos(models.Model):
+    fecha_generacion = models.DateTimeField(auto_now_add=True)
+    datos_json = models.JSONField()
+
+    class Meta:
+        ordering = ['-fecha_generacion']

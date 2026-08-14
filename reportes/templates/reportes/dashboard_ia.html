@@ -90,6 +90,18 @@
             </div>
             {% else %}
             
+            <!-- Metadata del Reporte (Fecha y Regenerar) -->
+            {% if fecha_generacion %}
+            <div class="flex items-center justify-end gap-3 mb-6">
+                <span class="text-xs text-gray-400">
+                    <i class="bi bi-clock-history"></i> Reporte guardado: {{ fecha_generacion|date:"d/m/Y H:i" }}
+                </span>
+                <a href="?tipo={{ tipo_seleccionado }}&regenerar=true" class="text-xs font-bold px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors inline-flex items-center gap-1" onclick="this.innerHTML='<i class=\'bi bi-arrow-repeat animate-spin\'></i> Analizando...'; this.classList.add('opacity-50', 'pointer-events-none');">
+                    <i class="bi bi-arrow-clockwise"></i> Volver a Analizar
+                </a>
+            </div>
+            {% endif %}
+            
             <!-- Resumen Narrativo Gerencial -->
             <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 md:p-8 shadow-sm border mb-8 flex flex-col md:flex-row gap-6 items-start" style="border-color: var(--color-border);">
                 
