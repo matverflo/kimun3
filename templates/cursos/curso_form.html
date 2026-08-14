@@ -67,6 +67,44 @@
             <p class="mt-2 text-sm text-red-500">{{ form.categoria.errors.0 }}</p>
             {% endif %}
         </div>
+
+        <hr class="my-8 border-gray-200">
+        
+        <h3 class="text-xl font-bold mb-4 text-primary"><i class="bi bi-file-earmark-medical me-2"></i>Estructura Exigida (Protocolo ELEAM/SENAMA)</h3>
+        
+        {{ form.media }}
+        
+        <div class="mb-6">
+            <label class="block text-base font-medium mb-2">Responsable de Impartir</label>
+            {{ form.responsable }}
+            <p class="text-xs text-secondary mt-1">{{ form.responsable.help_text }}</p>
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-base font-medium mb-2">Fundamentación</label>
+            {{ form.fundamentacion }}
+            <p class="text-xs text-secondary mt-1">{{ form.fundamentacion.help_text }}</p>
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-base font-medium mb-2">Objetivo General</label>
+            {{ form.objetivo_general }}
+            <p class="text-xs text-secondary mt-1">{{ form.objetivo_general.help_text }}</p>
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-base font-medium mb-2">Metodología</label>
+            {{ form.metodologia }}
+            <p class="text-xs text-secondary mt-1">{{ form.metodologia.help_text }}</p>
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-base font-medium mb-2">Formato de Evaluación</label>
+            {{ form.formato_evaluacion }}
+            <p class="text-xs text-secondary mt-1">{{ form.formato_evaluacion.help_text }}</p>
+        </div>
+        
+        <hr class="my-8 border-gray-200">
         
         {% if accion != 'crear' and accion != 'publicar' %}
         <!-- Estado -->

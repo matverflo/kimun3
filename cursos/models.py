@@ -45,6 +45,13 @@ class Curso(models.Model):
     exige_tiempo_minimo = models.BooleanField(default=False, help_text='Evita que el alumno complete el curso en menos tiempo del exigido')
     duracion_minutos = models.PositiveIntegerField(default=0, help_text='Duración estimada en minutos')
 
+    # --- CAMPOS EXIGIDOS POR PROTOCOLO SENAMA ---
+    responsable = models.CharField(max_length=200, blank=True, help_text='Nombre o cargo del responsable de impartir el curso')
+    fundamentacion = RichTextField(blank=True, help_text='Justificación del curso según necesidades detectadas')
+    objetivo_general = RichTextField(blank=True, help_text='Objetivo general de aprendizaje')
+    metodologia = RichTextField(blank=True, help_text='Metodología de enseñanza (ej: E-learning, Mixto)')
+    formato_evaluacion = RichTextField(blank=True, help_text='Cómo se evaluarán los conocimientos adquiridos')
+
     class Meta:
         verbose_name = 'Curso'
         verbose_name_plural = 'Cursos'
