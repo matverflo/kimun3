@@ -303,10 +303,8 @@ def dashboard_ia(request):
             else:
                 reporte = ReporteNuevosCursos.objects.filter(id=reporte_id).first()
         else:
-            if tipo == 'upskilling':
-                reporte = ReporteUpskilling.objects.first()
-            else:
-                reporte = ReporteNuevosCursos.objects.first()
+            # Si no hay ID, el usuario hizo clic en "Ejecutar Análisis", forzamos a crear uno nuevo
+            reporte = None
             
         if reporte and not regenerar:
             resultado_ia = reporte.datos_json
@@ -318,7 +316,9 @@ def dashboard_ia(request):
                     reporte = ReporteUpskilling.objects.create(datos_json=resultado_ia)
                 else:
                     reporte = ReporteNuevosCursos.objects.create(datos_json=resultado_ia)
-                fecha_generacion = reporte.fecha_generacion
+                
+                from django.shortcuts import redirect
+                return redirect(f"?tipo={tipo}&reporte_id={reporte.id}")
             else:
                 fecha_generacion = None
         

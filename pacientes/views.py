@@ -551,7 +551,8 @@ def sugerencia_ia(request, paciente_id):
     if reporte_id:
         reporte = ReporteAsignacionIA.objects.filter(id=reporte_id, paciente=paciente).first()
     else:
-        reporte = ReporteAsignacionIA.objects.filter(paciente=paciente).first()
+        # Si no hay ID, forzamos generar uno nuevo
+        reporte = None
 
     if reporte and not regenerar:
         resultado_ia = reporte.datos_json
@@ -563,7 +564,8 @@ def sugerencia_ia(request, paciente_id):
                 paciente=paciente,
                 datos_json=resultado_ia
             )
-            fecha_generacion = reporte.fecha_generacion
+            from django.shortcuts import redirect
+            return redirect(f"?reporte_id={reporte.id}")
         else:
             fecha_generacion = None
     
