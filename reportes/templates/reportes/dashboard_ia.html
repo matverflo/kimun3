@@ -339,10 +339,11 @@
                 if (this.classList.contains('opacity-50')) return;
                 const url = this.dataset.url;
                 const isIa = this.dataset.ia === 'true';
+                const msg = this.dataset.msg || null;
                 
                 if (isIa) {
                     this.classList.add('opacity-50', 'pointer-events-none');
-                    showLoadingModal();
+                    showLoadingModal(msg);
                     setTimeout(() => { window.location.href = url; }, 150);
                 } else {
                     window.location.href = url;
