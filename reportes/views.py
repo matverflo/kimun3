@@ -328,6 +328,7 @@ def dashboard_ia(request):
             from usuarios.models import Usuario
             
             upskilling_list = resultado_ia.get('upskilling', [])
+            filtered_upskilling = []
             for item in upskilling_list:
                 try:
                     c_id = int(item.get('curso_id', 0))
@@ -344,16 +345,19 @@ def dashboard_ia(request):
                         # Filtramos manteniendo solo los que coinciden con algún rol ideal
                         colabs = colabs.filter(q_roles)
 
-                    # Anotar cuántos cursos pendientes tienen
-                    colabs = colabs.annotate(
-                        cursos_pendientes=Count('inscripciones', filter=Q(inscripciones__estado__in=['asignado', 'en_progreso']))
-                    ).order_by('cursos_pendientes')[:3]
-                    
-                    item['colaboradores_sugeridos'] = colabs
+                    if colabs.exists():
+                        # Anotar cuántos cursos pendientes tienen
+                        colabs = colabs.annotate(
+                            cursos_pendientes=Count('inscripciones', filter=Q(inscripciones__estado__in=['asignado', 'en_progreso']))
+                        ).order_by('cursos_pendientes')[:3]
+                        
+                        item['colaboradores_sugeridos'] = colabs
+                        filtered_upskilling.append(item)
                 except (ValueError, TypeError):
-                    item['colaboradores_sugeridos'] = []
-                    
-        context['resultado_ia'] = resultado_ia
+                    pass
+            
+            resultado_ia['upskilling'] = filtered_upskilling
+            context['resultado_ia'] = resultado_ia
         
     elif tipo == 'pacientes':
         from pacientes.models import Paciente
