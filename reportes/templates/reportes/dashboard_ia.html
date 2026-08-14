@@ -240,14 +240,12 @@
             {% if tipo_seleccionado == 'upskilling' %}
             
             <!-- PANEL A: UPSKILLING -->
-            <div class="space-y-4 max-w-3xl mx-auto">
-                <div class="flex items-center gap-2 mb-2">
-                    <i class="bi bi-person-fill-up text-blue-500 text-xl"></i>
-                    <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">Sugerencias de Asignación</h3>
-                </div>
-                <p class="text-sm text-gray-500 mb-4">Colaboradores que deberían ser inscritos en cursos existentes del catálogo.</p>
-                
-                <div class="space-y-4">
+            <div class="flex items-center gap-3 mt-10 mb-4 px-2">
+                <i class="bi bi-caret-right-fill text-gray-400 text-xs"></i>
+                <h3 class="font-bold text-sm text-gray-400 tracking-wider uppercase">Sugerencias de Asignación (Catálogo Existente)</h3>
+            </div>
+            
+            <div class="space-y-4 pb-12">
                     {% for ups in resultado_ia.upskilling %}
                     <div class="bg-white dark:bg-slate-800 rounded-2xl border shadow-sm p-6 relative overflow-hidden hover:shadow-md transition-shadow" style="border-color: var(--color-border);">
                         
@@ -309,14 +307,12 @@
             {% elif tipo_seleccionado == 'nuevos_cursos' %}
             
             <!-- PANEL B: NUEVOS CURSOS -->
-            <div class="space-y-4 max-w-3xl mx-auto">
-                <div class="flex items-center gap-2 mb-2">
-                    <i class="bi bi-node-plus-fill text-amber-500 text-xl"></i>
-                    <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">Cursos Faltantes Sugeridos</h3>
-                </div>
-                <p class="text-sm text-gray-500 mb-4">Vacíos de conocimiento detectados que requieren creación de nuevos contenidos.</p>
-                
-                <div class="space-y-4">
+            <div class="flex items-center gap-3 mt-10 mb-4 px-2">
+                <i class="bi bi-caret-right-fill text-gray-400 text-xs"></i>
+                <h3 class="font-bold text-sm text-gray-400 tracking-wider uppercase">Cursos Faltantes Sugeridos</h3>
+            </div>
+            
+            <div class="space-y-4 pb-12">
                     {% for nc in resultado_ia.nuevos_cursos %}
                     <div class="bg-white dark:bg-slate-800 rounded-2xl border shadow-sm p-6 relative overflow-hidden hover:shadow-md transition-shadow" style="border-color: var(--color-border);">
                         
