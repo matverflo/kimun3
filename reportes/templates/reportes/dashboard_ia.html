@@ -287,11 +287,6 @@
         <div class="text-center">
             <h3 class="text-lg font-bold mb-1" style="color: var(--color-text);">Analizando con IA</h3>
             <p id="ia-loading-msg" class="text-sm" style="color: var(--color-text-secondary);">Consultando el modelo de inteligencia artificial...</p>
-        </div>
-        <!-- Barra de progreso animada -->
-        <div class="w-full bg-gray-100 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
-            <div class="h-full bg-blue-500 rounded-full animate-pulse" style="width: 100%;"></div>
-        </div>
         <p class="text-xs text-gray-400 dark:text-slate-500">Este proceso puede tomar hasta 30 segundos.</p>
     </div>
 </div>
@@ -309,70 +304,44 @@
     ];
 
     function showLoadingModal(msg) {
-        loadingMsg.textContent = msg || messages[0];
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        let i = 1;
-        window._iaInterval = setInterval(() => {
-            loadingMsg.textContent = messages[i % messages.length];
-            i++;
-        }, 4000);
-<script>
-    const modal = document.getElementById('ia-loading-modal');
-    const loadingMsg = document.getElementById('ia-loading-msg');
-
-    const messages = [
-        "Analizando patologías de los pacientes...",
-        "Revisando el catálogo de cursos disponibles...",
-        "Evaluando capacitaciones del personal...",
-        "Generando recomendaciones con IA...",
-        "Preparando el diagnóstico institucional...",
-    ];
-
-    function showLoadingModal(msg) {
-        loadingMsg.textContent = msg || messages[0];
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        let i = 1;
-        window._iaInterval = setInterval(() => {
-            loadingMsg.textContent = messages[i % messages.length];
-            i++;
-        }, 4000);
+        if (modal) {
+            loadingMsg.textContent = msg || messages[0];
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            let i = 1;
+            window._iaInterval = setInterval(() => {
+                loadingMsg.textContent = messages[i % messages.length];
+                i++;
+            }, 4000);
+        }
     }
 
     function hideLoadingModal() {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
         if (window._iaInterval) clearInterval(window._iaInterval);
     }
 
-    // ✅ Fix: limpiar estado al volver con botón atrás (bfcache)
-    window.addEventListener('pageshow', function(e) {
+    // Limpiar estado al volver con botón atrás (bfcache)
+    window.addEventListener('pageshow', function() {
         hideLoadingModal();
         document.querySelectorAll('.cursor-pointer[data-url]').forEach(card => {
             card.classList.remove('opacity-50', 'pointer-events-none');
-            const btn = card.querySelector('button');
-            if (btn && btn.textContent.includes('Analizando')) {
-                btn.innerHTML = 'Ejecutar Análisis <i class="bi bi-magic"></i>';
-            }
-        });
-        document.querySelectorAll('a[href*="sugerencia_ia"]').forEach(btn => {
-            btn.innerHTML = '<i class="bi bi-robot"></i> Asignar';
-            btn.classList.remove('opacity-75', 'pointer-events-none');
         });
     });
 
     document.addEventListener("DOMContentLoaded", function() {
-        // Tarjetas de análisis con data-url
+        // Tarjetas con data-url
         document.querySelectorAll('.cursor-pointer[data-url]').forEach(card => {
             card.addEventListener('click', function() {
                 if (this.classList.contains('opacity-50')) return;
                 const url = this.dataset.url;
                 const isIa = this.dataset.ia === 'true';
-                this.classList.add('opacity-50', 'pointer-events-none');
+                
                 if (isIa) {
-                    const btn = this.querySelector('button');
-                    if (btn) btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin"></i> Analizando...';
+                    this.classList.add('opacity-50', 'pointer-events-none');
                     showLoadingModal();
                     setTimeout(() => { window.location.href = url; }, 150);
                 } else {
@@ -396,8 +365,7 @@
     function filterPatients() {
         let input = document.getElementById('searchInput').value.toLowerCase();
         document.querySelectorAll('.patient-card').forEach(card => {
-            let searchData = card.getAttribute('data-search');
-            card.style.display = searchData.includes(input) ? "" : "none";
+            card.style.display = card.getAttribute('data-search').includes(input) ? "" : "none";
         });
     }
 </script>
