@@ -312,8 +312,6 @@
         loadingMsg.textContent = msg || messages[0];
         modal.classList.remove('hidden');
         modal.classList.add('flex');
-
-        // Rotar mensajes cada 4s
         let i = 1;
         window._iaInterval = setInterval(() => {
             loadingMsg.textContent = messages[i % messages.length];
@@ -321,54 +319,73 @@
         }, 4000);
     }
 
+    function hideLoadingModal() {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        if (window._iaInterval) clearInterval(window._iaInterval);
+    }
+
+    // ✅ Fix: limpiar estado al volver con botón atrás (bfcache)
+    window.addEventListener('pageshow', function(e) {
+        hideLoadingModal();
+        document.querySelectorAll('.cursor-pointer').forEach(card => {
+            card.classList.remove('opacity-50', 'pointer-events-none');
+            const btn = card.querySelector('button');
+            if (btn) {
+                // Restaurar texto original del botón
+                if (btn.textContent.includes('Analizando')) {
+                    const isUpskilling = card.getAttribute('onclick')?.includes('upskilling');
+                    btn.innerHTML = isUpskilling
+                        ? 'Ejecutar Análisis <i class="bi bi-magic"></i>'
+                        : 'Ejecutar Análisis <i class="bi bi-magic"></i>';
+                }
+            }
+        });
+        document.querySelectorAll('a[href*="sugerencia_ia"]').forEach(btn => {
+            btn.innerHTML = '<i class="bi bi-robot"></i> Asignar';
+            btn.classList.remove('opacity-75', 'pointer-events-none');
+        });
+    });
+
     document.addEventListener("DOMContentLoaded", function() {
-        // Botones de análisis (upskilling y nuevos_cursos)
-        const cards = document.querySelectorAll('.cursor-pointer[onclick]');
-        cards.forEach(card => {
+        // Tarjetas de análisis (upskilling y nuevos_cursos)
+        document.querySelectorAll('.cursor-pointer[onclick]').forEach(card => {
             card.addEventListener('click', function(e) {
                 if (this.classList.contains('opacity-50')) return;
-                this.classList.add('opacity-50', 'pointer-events-none');
 
-                const href = this.getAttribute('onclick');
-                // Solo mostrar spinner para análisis de IA (no pacientes)
-                if (href && (href.includes('upskilling') || href.includes('nuevos_cursos'))) {
+                const onclickVal = this.getAttribute('onclick');
+                if (onclickVal && (onclickVal.includes('upskilling') || onclickVal.includes('nuevos_cursos'))) {
                     e.preventDefault();
-                    const url = href.match(/href='([^']+)'/);
-                    showLoadingModal();
-                    setTimeout(() => {
-                        window.location.href = url ? url[1] : '#';
-                    }, 200);
+                    e.stopPropagation();
+                    const match = onclickVal.match(/href='([^']+)'/);
+                    if (match) {
+                        this.classList.add('opacity-50', 'pointer-events-none');
+                        const btn = this.querySelector('button');
+                        if (btn) btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin"></i> Analizando...';
+                        showLoadingModal();
+                        setTimeout(() => { window.location.href = match[1]; }, 150);
+                    }
                 }
             });
         });
 
-        // Botón "Asignar" para pacientes individuales
+        // Botones "Asignar" en lista de pacientes
         document.querySelectorAll('a[href*="sugerencia_ia"]').forEach(btn => {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
                 const href = this.href;
-                this.innerHTML = '<i class="bi bi-arrow-repeat animate-spin"></i> Analizando...';
-                this.classList.add('opacity-75', 'pointer-events-none');
                 showLoadingModal("Analizando el perfil del paciente y buscando el mejor cuidador...");
-                setTimeout(() => {
-                    window.location.href = href;
-                }, 200);
+                setTimeout(() => { window.location.href = href; }, 150);
             });
         });
     });
 
-    // Función de filtrado para pacientes
+    // Filtrado de pacientes
     function filterPatients() {
         let input = document.getElementById('searchInput').value.toLowerCase();
-        let cards = document.querySelectorAll('.patient-card');
-        
-        cards.forEach(card => {
+        document.querySelectorAll('.patient-card').forEach(card => {
             let searchData = card.getAttribute('data-search');
-            if (searchData.includes(input)) {
-                card.style.display = "";
-            } else {
-                card.style.display = "none";
-            }
+            card.style.display = searchData.includes(input) ? "" : "none";
         });
     }
 </script>
