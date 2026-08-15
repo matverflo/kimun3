@@ -70,7 +70,6 @@ test_visuals.py
 create_dummy_course.py
 populate_db.py
 populate_real_course.py
-seed_*.py
 update_course_structure.py
 *.json
 !vercel.json
