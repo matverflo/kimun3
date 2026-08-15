@@ -47,9 +47,13 @@
         </div>
         <div class="flex gap-2">
             {% if curso.estado == 'borrador' %}
-            <a href="{% url 'cursos:curso_publish' curso.pk %}" class="btn-success px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm" style="background-color: var(--color-success); color: white;">
-                <i class="bi bi-rocket-takeoff me-1"></i> Publicar Curso
-            </a>
+            <button type="button" onclick="document.getElementById('modal-publish-curso').classList.remove('hidden')" class="btn-success px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm" style="background-color: var(--color-success); color: white;">
+                <i class="bi bi-globe me-1"></i> Publicar Curso
+            </button>
+            {% else %}
+            <button type="button" onclick="document.getElementById('modal-unpublish-curso').classList.remove('hidden')" class="btn-outline px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm" style="border-color: var(--color-border); color: var(--color-text);">
+                <i class="bi bi-eye-slash me-1"></i> Pasar a Borrador
+            </button>
             {% endif %}
             <a href="{% url 'cursos:curso_gestion' curso.pk %}" class="btn-primary px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm">
                 <i class="bi bi-people-fill me-1"></i> Administrar Curso
@@ -58,6 +62,50 @@
     </div>
     {% endif %}
 </div>
+
+{% if stats and not simular_estudiante %}
+<!-- Estadísticas del Curso para Admin/Docente -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 stagger-in">
+    <!-- Inscritos Actualmente -->
+    <div class="hybrid-card p-6 rounded-2xl flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-sm" style="background-color: var(--color-info); color: white;">
+            <i class="bi bi-people-fill"></i>
+        </div>
+        <div>
+            <h3 class="text-sm font-semibold" style="color: var(--color-text-secondary);">Inscritos Actualmente</h3>
+            <p class="text-2xl font-bold" style="color: var(--color-text);">
+                {{ stats.inscritos }}
+            </p>
+        </div>
+    </div>
+    
+    <!-- Alumnos Egresados -->
+    <div class="hybrid-card p-6 rounded-2xl flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-sm" style="background-color: var(--color-success); color: white;">
+            <i class="bi bi-mortarboard-fill"></i>
+        </div>
+        <div>
+            <h3 class="text-sm font-semibold" style="color: var(--color-text-secondary);">Alumnos Egresados</h3>
+            <p class="text-2xl font-bold" style="color: var(--color-text);">
+                {{ stats.egresados }}
+            </p>
+        </div>
+    </div>
+    
+    <!-- Tasa de Finalización -->
+    <div class="hybrid-card p-6 rounded-2xl flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-sm" style="background-color: var(--color-primary); color: white;">
+            <i class="bi bi-graph-up-arrow"></i>
+        </div>
+        <div>
+            <h3 class="text-sm font-semibold" style="color: var(--color-text-secondary);">Tasa de Finalización</h3>
+            <p class="text-2xl font-bold" style="color: var(--color-text);">
+                {{ stats.tasa_finalizacion }}%
+            </p>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <div class="{% if es_colaborador %}flex flex-col gap-6{% else %}layout-split{% endif %}">
     <!-- Contenido Principal (Izquierda) -->
@@ -628,5 +676,81 @@
     window.addEventListener('beforeunload', registrarTiempoSesion);
 </script>
 {% endif %}
+
+<!-- Modal Publicar Curso -->
+<div id="modal-publish-curso" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" style="backdrop-filter: blur(4px);"></div>
+
+    <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg dark:bg-slate-800 border" style="border-color: var(--color-border);">
+                <div class="px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10 text-green-600">
+                            <i class="bi bi-globe text-xl"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                            <h3 class="text-lg font-bold leading-6" id="modal-title" style="color: var(--color-text);">Publicar Curso</h3>
+                            <div class="mt-2">
+                                <p class="text-sm" style="color: var(--color-text-secondary);">
+                                    ¿Estás seguro que quieres publicar el curso <strong>{{ curso.titulo }}</strong>?
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 bg-gray-50 dark:bg-slate-800/50">
+                    <form method="post" action="{% url 'cursos:curso_publish' curso.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="inline-flex w-full justify-center rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 sm:ml-3 sm:w-auto" style="background-color: var(--color-success);">
+                            Sí, Publicar
+                        </button>
+                    </form>
+                    <button type="button" onclick="document.getElementById('modal-publish-curso').classList.add('hidden')" class="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto dark:bg-slate-700 dark:text-gray-200 dark:ring-gray-600 dark:hover:bg-slate-600 transition-colors">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Despublicar Curso -->
+<div id="modal-unpublish-curso" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" style="backdrop-filter: blur(4px);"></div>
+
+    <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg dark:bg-slate-800 border" style="border-color: var(--color-border);">
+                <div class="px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-yellow-100 sm:mx-0 sm:h-10 sm:w-10 text-yellow-600">
+                            <i class="bi bi-eye-slash text-xl"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                            <h3 class="text-lg font-bold leading-6" id="modal-title" style="color: var(--color-text);">Pasar a Borrador</h3>
+                            <div class="mt-2">
+                                <p class="text-sm" style="color: var(--color-text-secondary);">
+                                    ¿Estás seguro que quieres pasar el curso <strong>{{ curso.titulo }}</strong> a borrador? <br><br>Dejará de estar disponible para los colaboradores, incluso si ya estaban inscritos en él.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 bg-gray-50 dark:bg-slate-800/50">
+                    <form method="post" action="{% url 'cursos:curso_unpublish' curso.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="inline-flex w-full justify-center rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 sm:ml-3 sm:w-auto" style="background-color: var(--color-warning);">
+                            Sí, Ocultar
+                        </button>
+                    </form>
+                    <button type="button" onclick="document.getElementById('modal-unpublish-curso').classList.add('hidden')" class="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto dark:bg-slate-700 dark:text-gray-200 dark:ring-gray-600 dark:hover:bg-slate-600 transition-colors">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock %}

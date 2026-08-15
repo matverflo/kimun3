@@ -170,7 +170,7 @@
                         <tr class="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
                             <td class="px-6 py-4 font-medium text-sm text-gray-700 dark:text-gray-300">{{ rep.fecha_generacion|date:"d M Y, H:i" }}</td>
                             <td class="px-6 py-4 text-center">
-                                <a href="?tipo=nuevos_cursos&reporte_id={{ rep.id }}" class="px-3 py-1.5 rounded bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 text-sm font-bold inline-flex items-center gap-2 transition-colors">
+                                <a href="?tipo=nuevos_cursos&reporte_id={{ rep.id }}" class="px-3 py-1.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 text-sm font-bold inline-flex items-center gap-2 transition-colors">
                                     <i class="bi bi-eye"></i> Acceder
                                 </a>
                             </td>
@@ -281,10 +281,22 @@
                                             <p class="text-xs text-gray-500">{{ colab.cargo.nombre|default:"Sin cargo" }}</p>
                                         </div>
                                     </div>
-                                    <div class="text-right">
+                                    <div class="text-right flex items-center gap-3">
                                         <span class="text-xs font-medium px-2 py-1 bg-white dark:bg-slate-800 border rounded-md shadow-sm">
                                             {{ colab.cursos_pendientes }} curso(s) pendiente(s)
                                         </span>
+                                        <form onsubmit="inscribirCandidato(event, this, '{{ ups.curso_id }}', '{{ colab.id }}')" class="inline-block m-0">
+                                            {% csrf_token %}
+                                            {% if colab.ya_inscrito %}
+                                            <button type="button" disabled class="btn-inscribir text-xs font-bold bg-green-600 text-white px-3 py-1.5 rounded-lg shadow-sm cursor-not-allowed">
+                                                <i class="bi bi-check-circle-fill"></i> <span class="btn-text">Inscrito</span>
+                                            </button>
+                                            {% else %}
+                                            <button type="submit" class="btn-inscribir text-xs font-bold bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm" title="Inscribir a este colaborador en el curso sugerido">
+                                                <i class="bi bi-person-plus-fill"></i> <span class="btn-text">Inscribir</span>
+                                            </button>
+                                            {% endif %}
+                                        </form>
                                     </div>
                                 </div>
                                 {% empty %}
@@ -527,6 +539,55 @@
         let input = document.getElementById('searchInput').value.toLowerCase();
         document.querySelectorAll('.patient-card').forEach(card => {
             card.style.display = card.getAttribute('data-search').includes(input) ? "" : "none";
+        });
+    }
+
+    // Inscripción asíncrona de candidatos
+    function inscribirCandidato(event, form, curso_id, colaborador_id) {
+        event.preventDefault();
+        const btn = form.querySelector('.btn-inscribir');
+        const icon = btn.querySelector('i');
+        const text = btn.querySelector('.btn-text');
+
+        // Estado cargando
+        btn.disabled = true;
+        btn.classList.replace('bg-blue-600', 'bg-blue-400');
+        icon.className = 'bi bi-arrow-repeat animate-spin';
+        text.innerText = 'Guardando...';
+
+        const formData = new FormData(form);
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Cambiar botón a estado verde/inscrito
+                btn.classList.replace('bg-blue-400', 'bg-green-600');
+                btn.classList.replace('hover:bg-blue-700', 'hover:bg-green-700');
+                icon.className = 'bi bi-check-circle-fill';
+                text.innerText = 'Inscrito';
+                Toast.fire({icon: 'success', title: data.message});
+            } else {
+                // Revertir en caso de error
+                btn.disabled = false;
+                btn.classList.replace('bg-blue-400', 'bg-blue-600');
+                icon.className = 'bi bi-person-plus-fill';
+                text.innerText = 'Inscribir';
+                Toast.fire({icon: 'error', title: data.message});
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.classList.replace('bg-blue-400', 'bg-blue-600');
+            icon.className = 'bi bi-person-plus-fill';
+            text.innerText = 'Inscribir';
+            Toast.fire({icon: 'error', title: 'Error de red'});
         });
     }
 </script>

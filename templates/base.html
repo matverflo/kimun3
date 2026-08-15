@@ -368,12 +368,7 @@
                                     style="color: var(--color-text);"
                                     ><i class="bi bi-bar-chart"></i> Reportes</a
                                 >
-                                <a
-                                    href="{% url 'usuarios:usuario_list' %}"
-                                    class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2"
-                                    style="color: var(--color-text);"
-                                    ><i class="bi bi-people"></i> Usuarios</a
-                                >
+
                                 {% endif %}
                                 {% if user.rol == 'admin' or user.rol == 'docente' %}
                                 <a
@@ -517,13 +512,7 @@
                     </a>
                     {% endif %}
                     {% if user.rol == 'admin' %}
-                    <a
-                        href="{% url 'usuarios:usuario_list' %}"
-                        class="block py-3 px-4 rounded-lg {% if '/usuarios/' in request.path and request.path != '/perfil/' %}bg-gray-100 dark:bg-slate-700{% endif %}"
-                        style="color: var(--color-text)"
-                    >
-                        <i class="bi bi-people me-2"></i>Usuarios
-                    </a>
+
                     <a
                         href="{% url 'cursos:categoria_list' %}"
                         class="block py-3 px-4 rounded-lg {% if '/categorias' in request.path %}bg-gray-100 dark:bg-slate-700{% endif %}"
@@ -542,6 +531,7 @@
                         href="{% url 'reportes:dashboard_ia' %}"
                         class="block py-3 px-4 rounded-lg {% if '/ia' in request.path %}bg-gray-100 dark:bg-slate-700{% endif %}"
                         style="color: var(--color-text)"
+                    >
                         <i class="bi bi-robot me-2"></i>Análisis IA
                     </a>
                     {% endif %}

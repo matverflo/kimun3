@@ -15,8 +15,8 @@
             </p>
             <div class="flex flex-wrap gap-3 justify-center md:justify-start">
                 {% if user.rol == 'admin' %}
-                <a href="{% url 'usuarios:usuario_list' %}" class="btn-subtle px-4 py-2 rounded-lg text-sm font-medium" style="background: #ffffff; color: var(--color-primary); border: none; box-shadow: var(--shadow-sm);">
-                    <i class="bi bi-person-plus me-2"></i>Gestionar Usuarios
+                <a href="{% url 'pacientes:dashboard_erp' %}" class="btn-subtle px-4 py-2 rounded-lg text-sm font-medium" style="background: #ffffff; color: var(--color-primary); border: none; box-shadow: var(--shadow-sm);">
+                    <i class="bi bi-person-plus me-2"></i>Dashboard ERP
                 </a>
                 {% elif user.rol == 'docente' %}
                 <a href="{% url 'cursos:curso_create' %}" class="btn-subtle px-4 py-2 rounded-lg text-sm font-medium" style="background: #ffffff; color: var(--color-primary); border: none; box-shadow: var(--shadow-sm);">
@@ -39,8 +39,8 @@
     <h3 class="section-title"><i class="bi bi-lightning-charge"></i> Acciones Rápidas</h3>
     <div class="flex flex-wrap gap-3">
         {% if user.rol == 'admin' %}
-        <a href="{% url 'usuarios:usuario_list' %}" class="btn-subtle px-4 py-2 rounded-lg text-sm font-medium">
-            <i class="bi bi-person-plus me-2"></i>Gestionar Usuarios
+        <a href="{% url 'pacientes:dashboard_erp' %}" class="btn-subtle px-4 py-2 rounded-lg text-sm font-medium">
+            <i class="bi bi-person-plus me-2"></i>Dashboard ERP
         </a>
         <a href="{% url 'cursos:curso_create' %}" class="btn-subtle px-4 py-2 rounded-lg text-sm font-medium">
             <i class="bi bi-plus-circle me-2"></i>Crear Curso
@@ -69,15 +69,15 @@
 {% if user.rol == 'admin' %}
 <div class="layout-split mb-8">
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 stagger-in">
-        <a href="{% url 'usuarios:usuario_list' %}" class="hybrid-card-featured p-6 group block">
+        <a href="{% url 'pacientes:dashboard_erp' %}" class="hybrid-card-featured p-6 group block">
             <div class="flex items-start justify-between mb-4">
                 <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl" style="background-color: var(--color-primary); color: white;">
                     <i class="bi bi-people-fill"></i>
                 </div>
                 <span class="px-3 py-1 rounded-full text-xs font-bold" style="background-color: var(--color-primary); color: white;">{{ total_usuarios }}</span>
             </div>
-            <h3 class="text-lg font-bold mb-1" style="color: var(--color-text);">Usuarios</h3>
-            <p class="text-sm" style="color: var(--color-text-secondary);">Gestión de personal y roles</p>
+            <h3 class="text-lg font-bold mb-1" style="color: var(--color-text);">Usuarios / ERP</h3>
+            <p class="text-sm" style="color: var(--color-text-secondary);">Gestión operativa integral</p>
         </a>
         
         <a href="{% url 'reportes:dashboard_reportes' %}" class="hybrid-card-featured p-6 group block" style="border-inline-start-color: var(--color-success);">

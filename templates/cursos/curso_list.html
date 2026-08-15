@@ -23,7 +23,16 @@
 
 <!-- Filters -->
 <div class="mb-8 p-6 rounded-2xl border shadow-sm" style="background-color: var(--color-bg); border-color: var(--color-border);">
-    <form method="get" class="flex flex-col md:flex-row gap-4 items-end">
+    {% if request.user.rol == 'admin' %}
+    <div class="mb-6 inline-flex rounded-lg p-1 bg-gray-100 dark:bg-slate-800" role="tablist">
+        <button type="button" onclick="document.getElementById('admin_filter').value='todos'; document.getElementById('filter-form').submit();" class="px-6 py-2 rounded-md text-sm font-semibold transition-all {% if admin_filter == 'todos' %}bg-white shadow-sm text-blue-600 dark:bg-slate-700 dark:text-blue-400{% else %}text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{% endif %}">Todos los Cursos</button>
+        <button type="button" onclick="document.getElementById('admin_filter').value='mis_cursos'; document.getElementById('filter-form').submit();" class="px-6 py-2 rounded-md text-sm font-semibold transition-all {% if admin_filter == 'mis_cursos' %}bg-white shadow-sm text-blue-600 dark:bg-slate-700 dark:text-blue-400{% else %}text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{% endif %}">Mis Cursos</button>
+        <button type="button" onclick="document.getElementById('admin_filter').value='docentes'; document.getElementById('filter-form').submit();" class="px-6 py-2 rounded-md text-sm font-semibold transition-all {% if admin_filter == 'docentes' %}bg-white shadow-sm text-blue-600 dark:bg-slate-700 dark:text-blue-400{% else %}text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{% endif %}">Cursos de Docentes</button>
+    </div>
+    {% endif %}
+    
+    <form id="filter-form" method="get" class="flex flex-col md:flex-row gap-4 items-end">
+        <input type="hidden" name="admin_filter" id="admin_filter" value="{{ admin_filter }}">
         <!-- Búsqueda -->
         <div class="w-full md:flex-1">
             <label class="block text-sm font-semibold mb-2" style="color: var(--color-text-secondary);">Buscar</label>
@@ -85,6 +94,7 @@
 <!-- Lista de Cursos -->
 {% if cursos %}
 
+{% if request.user.rol != 'admin' %}
 <!-- Destacado -->
 <div class="mb-10 stagger-in">
     <h2 class="section-title">
@@ -154,16 +164,20 @@
     </div>
     {% endwith %}
 </div>
+{% endif %}
 
 <!-- Resto de los Cursos -->
-{% if cursos|length > 1 %}
+{% if request.user.rol == 'admin' or cursos|length > 1 %}
 <div class="mb-6">
+    {% if request.user.rol != 'admin' %}
     <h2 class="section-title">
         <i class="bi bi-collection-fill"></i>
         Más Cursos
     </h2>
+    {% endif %}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-in">
-        {% for curso in cursos|slice:"1:" %}
+        {% for curso in cursos %}
+        {% if request.user.rol == 'admin' or forloop.counter0 > 0 %}
         <div class="hybrid-card rounded-2xl p-6 group">
             <div class="flex items-start justify-between mb-4">
                 <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-sm" 
@@ -217,6 +231,7 @@
                 </a>
             </div>
         </div>
+        {% endif %}
         {% endfor %}
     </div>
 </div>
@@ -251,12 +266,11 @@
 <!-- Estado vacío -->
 {% if query or estado_filter or categoria_filter %}
 {% include 'partials/empty_state.html' with illustration_path='img/illustrations/empty-search.svg' title='No se encontraron resultados' description='No hay cursos que coincidan con tu búsqueda o filtros.' %}
-{% else %}
 {% url 'cursos:curso_create' as create_url %}
-{% if is_docente %}
+{% if is_docente and request.user.rol != 'admin' %}
 {% include 'partials/empty_state.html' with illustration_path='img/illustrations/empty-courses.svg' title='No has creado ningún curso' description='Crea el primer curso interactivo para que tus estudiantes puedan comenzar a aprender.' action_url=create_url action_text='Crear tu primer curso' %}
 {% else %}
-{% include 'partials/empty_state.html' with illustration_path='img/illustrations/empty-courses.svg' title='No hay cursos disponibles' description='Próximamente habrá nuevos e increíbles cursos disponibles para ti.' %}
+{% include 'partials/empty_state.html' with illustration_path='img/illustrations/empty-courses.svg' title='No hay cursos disponibles' description='Aún no hay cursos creados en la plataforma.' %}
 {% endif %}
 {% endif %}
 {% endif %}

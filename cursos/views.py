@@ -19,8 +19,14 @@ def curso_list(request):
     estado_filter = request.GET.get('estado', '')
     categoria_filter = request.GET.get('categoria', '')
     
+    admin_filter = request.GET.get('admin_filter', 'todos')
+    
     if request.user.rol == 'admin':
         cursos = Curso.objects.select_related('docente_creador', 'categoria')
+        if admin_filter == 'docentes':
+            cursos = cursos.filter(docente_creador__rol='docente')
+        elif admin_filter == 'mis_cursos':
+            cursos = cursos.filter(docente_creador=request.user)
     elif request.user.rol == 'docente':
         cursos = Curso.objects.filter(docente_creador=request.user).select_related('categoria')
     else:
@@ -48,6 +54,7 @@ def curso_list(request):
         'query': query,
         'estado_filter': estado_filter,
         'categoria_filter': categoria_filter,
+        'admin_filter': admin_filter,
         'categorias': Categoria.objects.all(),
         'now': timezone.now()
     })
@@ -110,26 +117,31 @@ def curso_edit(request, pk):
 def curso_publish(request, pk):
     curso = get_object_or_404(Curso, pk=pk)
     
-    # Si ya está publicado, redirigir
     if curso.estado == 'publicado':
         return redirect('cursos:curso_detail', pk=curso.id)
 
     if request.method == 'POST':
-        form = CursoPublishForm(request.POST, instance=curso)
-        if form.is_valid():
-            curso = form.save(commit=False)
-            curso.estado = 'publicado'
-            curso.save()
-            messages.success(request, f'Curso "{curso.titulo}" publicado exitosamente.')
-            return redirect('cursos:curso_detail', pk=curso.id)
-    else:
-        form = CursoPublishForm(instance=curso)
+        curso.estado = 'publicado'
+        curso.save()
+        messages.success(request, f'Curso "{curso.titulo}" publicado exitosamente.')
+        
+    return redirect('cursos:curso_detail', pk=curso.id)
+
+
+@login_required
+@course_owner_or_admin
+def curso_unpublish(request, pk):
+    curso = get_object_or_404(Curso, pk=pk)
     
-    return render(request, 'cursos/curso_form.html', {
-        'accion': 'publicar',
-        'curso': curso,
-        'form': form
-    })
+    if curso.estado == 'borrador':
+        return redirect('cursos:curso_detail', pk=curso.id)
+
+    if request.method == 'POST':
+        curso.estado = 'borrador'
+        curso.save()
+        messages.success(request, f'Curso "{curso.titulo}" pasado a borrador exitosamente.')
+        
+    return redirect('cursos:curso_detail', pk=curso.id)
 
 
 @login_required
@@ -166,6 +178,19 @@ def curso_detail(request, pk):
             
     simular_estudiante = request.session.get(session_key, False) and request.user.rol in ['admin', 'docente']
     es_colaborador = request.user.rol == 'colaborador' or simular_estudiante
+    
+    # Calcular estadísticas si es admin/docente y el curso está publicado
+    stats = None
+    if not es_colaborador and curso.estado == 'publicado':
+        inscritos = InscripcionCurso.objects.filter(curso=curso, estado__in=['en_progreso', 'asignado'], usuario__rol='colaborador').count()
+        egresados = InscripcionCurso.objects.filter(curso=curso, estado='completado', usuario__rol='colaborador').count()
+        total_historico = inscritos + egresados
+        tasa_finalizacion = round((egresados / total_historico * 100) if total_historico > 0 else 0)
+        stats = {
+            'inscritos': inscritos,
+            'egresados': egresados,
+            'tasa_finalizacion': tasa_finalizacion
+        }
     
     contenido_unificado = list(clases) + list(evaluaciones)
     contenido_unificado.sort(key=lambda x: getattr(x, 'orden', 0))
@@ -318,6 +343,7 @@ def curso_detail(request, pk):
         'simular_estudiante': simular_estudiante,
         'es_colaborador': es_colaborador,
         'certificado': certificado,
+        'stats': stats,
         'now': timezone.now()
     })
 

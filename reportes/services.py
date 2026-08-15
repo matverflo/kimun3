@@ -48,12 +48,21 @@ def obtener_analisis_institucional(tipo_analisis):
         cursos_hechos = []
         if hasattr(c, 'inscripciones'):
             from cursos.models import InscripcionCurso
-            insc = c.inscripciones.filter(estado='completado')
+            insc = c.inscripciones.filter(estado__in=['completado', 'en_progreso'])
             cursos_hechos = [i.curso.titulo for i in insc]
+            
+        pacientes_asignados = c.pacientes_asignados.all()
+        patologias_cuidadas = set()
+        for p in pacientes_asignados:
+            if p.patologias:
+                for pat in p.patologias.split(','):
+                    patologias_cuidadas.add(pat.strip().capitalize())
+                    
+        pat_str = ", ".join(patologias_cuidadas) if patologias_cuidadas else "Ninguna"
         
-        colab_list.append(f"- {c.get_full_name()} ({cargo}): Ha completado: {', '.join(cursos_hechos) if cursos_hechos else 'Ninguno'}")
+        colab_list.append(f"- ID: {c.id} | {c.get_full_name()} ({cargo}) | Patologías a cargo: {pat_str} | Cursos: {', '.join(cursos_hechos) if cursos_hechos else 'Ninguno'}")
         
-    resumen_colaboradores = "Personal actual y sus capacitaciones completadas:\n" + "\n".join(colab_list)
+    resumen_colaboradores = "Personal actual, patologías de los pacientes que cuidan directamente, y cursos ya realizados:\n" + "\n".join(colab_list)
 
     # Inicializar cliente
     api_key = os.getenv('OPENAI_API_KEY')
@@ -71,9 +80,13 @@ def obtener_analisis_institucional(tipo_analisis):
     if tipo_analisis == 'upskilling':
         system_prompt = """
         Eres un Consultor Estratégico de Recursos Humanos (IA Médica) de una organización gerontológica.
-        Tu tarea es evaluar qué cursos YA EXISTENTES en el catálogo deben ser reforzados y enseñados al personal, basándote estrictamente en las patologías clínicas actuales de los pacientes.
+        Tu tarea es evaluar qué cursos YA EXISTENTES en el catálogo deben ser reforzados, basándote en las patologías reales de los pacientes.
         
-        IMPORTANTE: Revisa el listado de PERSONAL ACTUAL. ¡NO sugieras un curso si todos los colaboradores de los roles relevantes ya lo completaron o lo tienen en curso! Solo sugiere cursos donde haya un déficit real de capacitación.
+        INSTRUCCIONES CLAVES:
+        1. Analiza qué patologías son críticas actualmente en la institución.
+        2. Selecciona un curso existente que aborde directamente esa patología.
+        3. En lugar de sugerir cuidadores, debes indicar claramente cuál es la "patología objetivo" principal que este curso ayuda a tratar (ej: "Demencia", "Incontinencia urinaria"). El sistema automáticamente asignará el curso a los cuidadores que atienden a esos pacientes.
+        4. Solo sugiere cursos donde haya un déficit real de capacitación.
         
         Devuelve EXACTAMENTE un objeto JSON válido con este esquema, sin texto extra:
         {
@@ -82,8 +95,8 @@ def obtener_analisis_institucional(tipo_analisis):
             {
               "curso_id": "El número de ID del curso (entero)",
               "curso_existente": "Nombre del curso",
-              "justificacion": "Justificación clínica detallada de por qué se necesita más personal capacitado en esto.",
-              "roles_ideales": ["Enfermero/a", "Cuidador/a", "Tens"]
+              "justificacion": "Justificación clínica detallada (ej: 'Tenemos 35 pacientes con Incontinencia Urinaria, es vital capacitar a sus cuidadores directos').",
+              "patologias_objetivo": ["Incontinencia urinaria", "Demencia"] // Array de strings con las patologías que este curso ataca
             }
           ]
         }
@@ -91,16 +104,21 @@ def obtener_analisis_institucional(tipo_analisis):
     else:
         system_prompt = """
         Eres un Consultor Estratégico de Recursos Humanos (IA Médica) de una organización gerontológica.
-        Tu tarea es identificar qué habilidades críticas FALTAN totalmente en el catálogo de cursos actual basándote en las patologías de los pacientes, y sugerir la creación de nuevos cursos.
+        Tu tarea es identificar qué habilidades clínicas y de cuidado FALTAN totalmente en el catálogo de cursos actual basándote en las patologías reales de los pacientes.
+        
+        INSTRUCCIONES CLAVES:
+        Tu justificación debe ser extremadamente específica, empírica y basada en los datos provistos.
+        Debes seguir esta estructura de pensamiento para justificar: "Actualmente no contamos con ningún curso sobre [Tema]. Tenemos [N] residentes que sufren de [Patología/Condición], por lo que este curso ayudaría específicamente a [Acción clínica o beneficio concreto]."
+        No des respuestas genéricas. Cruza la falta de cursos con las necesidades médicas de la población.
         
         Devuelve EXACTAMENTE un objeto JSON válido con este esquema, sin texto extra:
         {
-          "resumen_general": "Resumen narrativo sobre las brechas detectadas.",
+          "resumen_general": "Resumen narrativo y cuantitativo sobre las brechas detectadas y el volumen de pacientes afectados por la falta de capacitación.",
           "nuevos_cursos": [
             {
-              "titulo_sugerido": "Nombre de un curso nuevo",
-              "habilidad_faltante": "Qué habilidad falta",
-              "justificacion": "Por qué es necesario."
+              "titulo_sugerido": "Nombre de un curso nuevo altamente específico",
+              "habilidad_faltante": "Técnica, protocolo o habilidad clínica exacta que falta en el catálogo",
+              "justificacion": "Justificación basada en datos (ej: 'No hay curso sobre manejo de gastrostomía. 12 residentes requieren alimentación enteral, y esto ayudaría a reducir IAAS...')"
             }
           ]
         }

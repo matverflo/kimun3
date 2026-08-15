@@ -67,23 +67,14 @@ class CursoForm(forms.ModelForm):
 class CursoCreateForm(forms.ModelForm):
     class Meta:
         model = Curso
-        fields = ['titulo', 'descripcion', 'categoria', 'responsable', 'fundamentacion', 'objetivo_general', 'metodologia', 'formato_evaluacion']
+        fields = ['titulo', 'categoria']
         widgets = {
             'titulo': forms.TextInput(attrs={
                 'class': 'input-field w-full px-4 py-3 rounded-xl text-lg',
                 'placeholder': 'Ej: Primeros Auxilios'
             }),
-            'descripcion': forms.Textarea(attrs={
-                'class': 'input-field w-full px-4 py-3 rounded-xl text-lg',
-                'rows': 4,
-                'placeholder': 'Describe el contenido general del curso...'
-            }),
             'categoria': forms.Select(attrs={
                 'class': 'input-field w-full px-4 py-3 rounded-xl'
-            }),
-            'responsable': forms.TextInput(attrs={
-                'class': 'input-field w-full px-4 py-3 rounded-xl text-lg',
-                'placeholder': 'Ej: Depto. de Kinesiología'
             }),
         }
 
@@ -101,7 +92,7 @@ class CursoCreateForm(forms.ModelForm):
                     'class': 'input-field w-full px-4 py-3 rounded-xl'
                 })
             )
-            self.order_fields(['titulo', 'descripcion', 'responsable', 'fundamentacion', 'objetivo_general', 'metodologia', 'formato_evaluacion', 'categoria', 'docente_creador'])
+            self.order_fields(['titulo', 'categoria', 'docente_creador'])
 
 
 class CursoPublishForm(forms.ModelForm):

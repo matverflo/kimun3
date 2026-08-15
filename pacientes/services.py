@@ -14,7 +14,7 @@ def obtener_sugerencia_asignacion(paciente_id):
     
     # Obtener colaboradores disponibles (no asignados actualmente al paciente)
     colaboradores_actuales = paciente.colaboradores.all()
-    colaboradores_disponibles = Usuario.objects.filter(rol='colaborador').exclude(id__in=colaboradores_actuales.values_list('id', flat=True))
+    colaboradores_disponibles = Usuario.objects.filter(rol='colaborador', is_active=True, cargo__nombre__icontains='cuidador')
     
     # Preparar el contexto para la IA
     datos_paciente = f"""
@@ -39,8 +39,11 @@ def obtener_sugerencia_asignacion(paciente_id):
             
         cursos_str = ", ".join(cursos_completados) if cursos_completados else "Sin cursos internos completados"
         
+        colaboradores_actuales_ids = list(colaboradores_actuales.values_list('id', flat=True))
+        is_assigned = "[YA ASIGNADO]" if c.id in colaboradores_actuales_ids else ""
+        
         candidatos_lista.append(
-            f"- ID: {c.id} | Nombre: {c.get_full_name()} | Cargo: {cargo_nombre} | Especialidades: {especialidades} | Cursos Completados: {cursos_str}"
+            f"- ID: {c.id} {is_assigned} | Nombre: {c.get_full_name()} | Cargo: {cargo_nombre} | Especialidades: {especialidades} | Cursos Completados: {cursos_str}"
         )
         
     datos_candidatos = "\n".join(candidatos_lista)
@@ -70,10 +73,14 @@ def obtener_sugerencia_asignacion(paciente_id):
     INSTRUCCIONES CLAVES:
     1. Redacta un 'resumen_caso' clínico y profesional detallando los riesgos y necesidades del paciente.
     2. Identifica 4 a 6 'habilidades_sugeridas' clave (ej. Atención centrada en la persona, Prevención de caídas).
-    3. Identifica 2 a 3 'certificaciones_requeridas' ideales para este caso.
+    3. Identifica todas las 'certificaciones_requeridas' clave e ideales para este caso. No hay un límite máximo.
     4. Evalúa a cada candidato disponible, dale un 'match_rate' (0 al 100).
     5. Para cada candidato recomendado, en 'certificaciones_cumplidas', enumera qué cursos o especialidades *reales* de los que tiene registrados le sirven para este caso.
-    6. Su justificación debe ser analítica y profesional.
+    6. Su justificación debe ser analítica y explicar CLARAMENTE el porqué de su porcentaje de 'match_rate'. Justifica el peso de las competencias: si alguien tiene menos cursos pero mayor porcentaje, explica que atiende la necesidad más crítica/urgente del paciente. Si tiene muchos cursos pero menor porcentaje, aclara que sus habilidades son útiles pero secundarias para la patología principal.
+    7. REGLA ESTRICTA DE DIAGNÓSTICOS: NO asumas, inventes, ni deduzcas diagnósticos específicos (ej. no digas Alzheimer si el texto solo dice Demencia). Relaciona la formación del cuidador con las necesidades del paciente usando únicamente la información textual proporcionada.
+    8. OBLIGATORIO: Evalúa a todos, pero en tu lista de 'recomendaciones' SOLO debes incluir a:
+       - Los cuidadores con la etiqueta [YA ASIGNADO] (obligatorio).
+       - Los 6 mejores cuidadores adicionales. Evalúa sus puntajes de forma estricta y realista.
     
     Devuelve EXACTAMENTE un objeto JSON válido con este esquema, sin texto extra, sin formato markdown ```json :
     {

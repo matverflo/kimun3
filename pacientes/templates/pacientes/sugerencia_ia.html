@@ -16,7 +16,7 @@
             <span class="text-xs text-gray-400">
                 <i class="bi bi-clock-history"></i> Análisis guardado: {{ fecha_generacion|date:"d/m/Y H:i" }}
             </span>
-            <a href="?regenerar=true" class="text-xs font-bold px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors inline-flex items-center gap-1" onclick="this.innerHTML='<i class=\'bi bi-arrow-repeat animate-spin\'></i> Analizando...'; this.classList.add('opacity-50', 'pointer-events-none');">
+            <a href="?regenerar=true" class="text-xs font-bold px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors inline-flex items-center gap-1" onclick="showAnalyzingModal(event)">
                 <i class="bi bi-arrow-clockwise"></i> Volver a Analizar
             </a>
         </div>
@@ -84,72 +84,129 @@
         </div>
     </div>
     
-    <!-- TÍTULO DE RECOMENDACIONES -->
+    <!-- TÍTULO DE ASIGNADOS ACTUALMENTE -->
     <div class="flex items-center gap-3 mt-10 mb-4 px-2">
-        <i class="bi bi-caret-right-fill text-gray-400 text-xs"></i>
-        <h3 class="font-bold text-sm text-gray-400 tracking-wider uppercase">Recomendaciones de personal por match rate</h3>
+        <i class="bi bi-person-check-fill text-blue-500 text-sm"></i>
+        <h3 class="font-bold text-sm text-blue-600 tracking-wider uppercase">Cuidadores Actuales (Evaluados por IA)</h3>
+    </div>
+    
+    <div class="space-y-4 mb-8">
+        {% for recomendacion in resultado_ia.recomendaciones %}
+            {% if recomendacion.id_colaborador in asignados_ids %}
+            <div class="bg-blue-50/30 dark:bg-slate-800/50 rounded-2xl border shadow-sm p-6 flex flex-col md:flex-row items-center gap-6 relative overflow-hidden border-blue-200 dark:border-blue-900/50">
+                <!-- Avatar -->
+                <div class="shrink-0">
+                    <div class="w-16 h-16 rounded-full flex items-center justify-center font-bold text-2xl text-white shadow-md bg-gradient-to-br from-[#1a365d] to-[#2d4a77] border-2 border-white dark:border-slate-800">
+                        {{ recomendacion.nombre|first }}
+                    </div>
+                </div>
+                
+                <!-- Info principal -->
+                <div class="flex-1 text-center md:text-left">
+                    <div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 mb-1.5">
+                        <h4 class="font-bold text-lg text-gray-900 dark:text-white">{{ recomendacion.nombre }}</h4>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                            {{ recomendacion.cargo }}
+                        </span>
+                    </div>
+                    
+                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
+                        {{ recomendacion.justificacion }}
+                    </p>
+                    
+                    <div class="flex flex-wrap gap-2 justify-center md:justify-start">
+                        {% for cert_cumplida in recomendacion.certificaciones_cumplidas %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800/30 shadow-sm">
+                            <i class="bi bi-check-circle text-emerald-500"></i> {{ cert_cumplida }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Derecha: Match Rate & Button -->
+                <div class="shrink-0 flex flex-col items-center justify-center border-t md:border-t-0 md:border-l border-blue-100 dark:border-blue-900/50 pt-5 md:pt-0 md:pl-6 w-full md:w-48">
+                    <div class="text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+                        {{ recomendacion.match_rate }}%
+                    </div>
+                    <div class="text-[10px] font-bold text-gray-400 tracking-widest uppercase mb-4">
+                        Compatibilidad
+                    </div>
+                    
+                    <button type="button" disabled class="w-full py-2.5 rounded-lg bg-gray-200 text-gray-500 font-bold text-sm shadow-sm flex items-center justify-center gap-2 cursor-not-allowed border border-gray-300 dark:bg-slate-700 dark:text-gray-400 dark:border-slate-600">
+                        <i class="bi bi-check2-all text-lg"></i> Ya Asignado
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        {% empty %}
+        <!-- Si no hay nada en recomendaciones, no se muestra nada aquí (o se muestra vacio luego en el otro for) -->
+        {% endfor %}
+    </div>
+
+    <!-- TÍTULO DE RECOMENDACIONES -->
+    <div class="flex items-center gap-3 mb-4 px-2">
+        <i class="bi bi-stars text-yellow-500 text-sm"></i>
+        <h3 class="font-bold text-sm text-gray-400 tracking-wider uppercase">Recomendaciones por match rate</h3>
     </div>
     
     <div class="space-y-4 pb-12">
         {% for recomendacion in resultado_ia.recomendaciones %}
-        <div class="bg-white dark:bg-slate-800 rounded-2xl border shadow-sm p-6 flex flex-col md:flex-row items-center gap-6 hover:shadow-md transition-shadow relative overflow-hidden" style="border-color: var(--color-border);">
-            
-            {% if forloop.first %}
-            <!-- Borde superior dorado para el #1 -->
-            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 to-yellow-600"></div>
+            {% if recomendacion.id_colaborador not in asignados_ids %}
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border shadow-sm p-6 flex flex-col md:flex-row items-center gap-6 hover:shadow-md transition-shadow relative overflow-hidden" style="border-color: var(--color-border);">
+                
+                {% if forloop.first %}
+                <!-- Borde superior dorado para el #1 -->
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 to-yellow-600"></div>
+                {% endif %}
+                
+                <!-- Avatar -->
+                <div class="shrink-0">
+                    <div class="w-16 h-16 rounded-full flex items-center justify-center font-bold text-2xl text-white shadow-md bg-gradient-to-br from-[#1a365d] to-[#2d4a77] border-2 border-white dark:border-slate-800">
+                        {{ recomendacion.nombre|first }}
+                    </div>
+                </div>
+                
+                <!-- Info principal -->
+                <div class="flex-1 text-center md:text-left">
+                    <div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 mb-1.5">
+                        <h4 class="font-bold text-lg text-gray-900 dark:text-white">{{ recomendacion.nombre }}</h4>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                            {{ recomendacion.cargo }}
+                        </span>
+                    </div>
+                    
+                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
+                        {{ recomendacion.justificacion }}
+                    </p>
+                    
+                    <div class="flex flex-wrap gap-2 justify-center md:justify-start">
+                        {% for cert_cumplida in recomendacion.certificaciones_cumplidas %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800/30 shadow-sm">
+                            <i class="bi bi-check-circle text-emerald-500"></i> {{ cert_cumplida }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Derecha: Match Rate & Button -->
+                <div class="shrink-0 flex flex-col items-center justify-center border-t md:border-t-0 md:border-l border-gray-100 dark:border-gray-700 pt-5 md:pt-0 md:pl-6 w-full md:w-48">
+                    <div class="text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+                        {{ recomendacion.match_rate }}%
+                    </div>
+                    <div class="text-[10px] font-bold text-gray-400 tracking-widest uppercase mb-4">
+                        Compatibilidad
+                    </div>
+                    
+                    <form action="{% url 'pacientes:sugerencia_ia' paciente.id %}" method="POST" class="w-full">
+                        {% csrf_token %}
+                        <input type="hidden" name="colaborador_id" value="{{ recomendacion.id_colaborador }}">
+                        <button type="submit" class="w-full py-2.5 rounded-lg bg-[#1a365d] hover:bg-[#122746] text-white font-bold text-sm transition-colors shadow-sm flex items-center justify-center gap-2">
+                            Asignar Paciente <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
             {% endif %}
-            
-            <!-- Avatar -->
-            <div class="shrink-0">
-                <div class="w-16 h-16 rounded-full flex items-center justify-center font-bold text-2xl text-white shadow-md bg-gradient-to-br from-[#1a365d] to-[#2d4a77] border-2 border-white dark:border-slate-800">
-                    {{ recomendacion.nombre|first }}
-                </div>
-            </div>
-            
-            <!-- Info principal -->
-            <div class="flex-1 text-center md:text-left">
-                <div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 mb-1.5">
-                    <h4 class="font-bold text-lg text-gray-900 dark:text-white">{{ recomendacion.nombre }}</h4>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                        {{ recomendacion.cargo }}
-                    </span>
-                </div>
-                
-                <p class="text-sm text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
-                    {{ recomendacion.justificacion }}
-                </p>
-                
-                <div class="flex flex-wrap gap-2 justify-center md:justify-start">
-                    {% for cert_cumplida in recomendacion.certificaciones_cumplidas %}
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800/30 shadow-sm">
-                        <i class="bi bi-check-circle text-emerald-500"></i> {{ cert_cumplida }}
-                    </span>
-                    {% endfor %}
-                </div>
-            </div>
-            
-            <!-- Derecha: Match Rate & Button -->
-            <div class="shrink-0 flex flex-col items-center justify-center border-t md:border-t-0 md:border-l border-gray-100 dark:border-gray-700 pt-5 md:pt-0 md:pl-6 w-full md:w-48">
-                <div class="text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
-                    {{ recomendacion.match_rate }}%
-                </div>
-                <div class="text-[10px] font-bold text-gray-400 tracking-widest uppercase mb-4">
-                    Compatibilidad
-                </div>
-                
-                <form action="{% url 'pacientes:sugerencia_ia' paciente.id %}" method="POST" class="w-full">
-                    {% csrf_token %}
-                    <input type="hidden" name="colaborador_id" value="{{ recomendacion.id_colaborador }}">
-                    <button type="submit" class="w-full py-2.5 rounded-lg bg-[#1a365d] hover:bg-[#122746] text-white font-bold text-sm transition-colors shadow-sm flex items-center justify-center gap-2">
-                        Asignar Paciente <i class="bi bi-arrow-right"></i>
-                    </button>
-                </form>
-            </div>
-        </div>
-        {% empty %}
-        <div class="p-8 text-center text-gray-500 border rounded-xl border-dashed">
-            No se encontraron cuidadores disponibles.
-        </div>
         {% endfor %}
     </div>
     
@@ -163,12 +220,12 @@
             <div class="w-20 h-20 rounded-full border-4 border-gray-200 dark:border-slate-700 absolute inset-0"></div>
             <div class="w-20 h-20 rounded-full border-4 border-transparent border-t-emerald-500 absolute inset-0 animate-spin"></div>
             <div class="absolute inset-0 flex items-center justify-center">
-                <i class="bi bi-person-check text-2xl text-emerald-500"></i>
+                <i id="modal-icon" class="bi bi-person-check text-2xl text-emerald-500"></i>
             </div>
         </div>
         <div class="text-center">
-            <h3 class="text-lg font-bold mb-1" style="color: var(--color-text);">Asignando Cuidador</h3>
-            <p class="text-sm" style="color: var(--color-text-secondary);">Guardando la asignación en el sistema...</p>
+            <h3 id="modal-title" class="text-lg font-bold mb-1" style="color: var(--color-text);">Asignando Cuidador</h3>
+            <p id="modal-text" class="text-sm" style="color: var(--color-text-secondary);">Guardando la asignación en el sistema...</p>
         </div>
         <div class="w-full bg-gray-100 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
             <div class="h-full bg-emerald-500 rounded-full animate-pulse" style="width: 100%;"></div>
@@ -180,9 +237,23 @@
     document.querySelectorAll('form[action*="sugerencia_ia"]').forEach(form => {
         form.addEventListener('submit', function() {
             const modal = document.getElementById('assign-modal');
+            document.getElementById('modal-title').textContent = 'Asignando Cuidador';
+            document.getElementById('modal-text').textContent = 'Guardando la asignación en el sistema...';
+            document.getElementById('modal-icon').className = 'bi bi-person-check text-2xl text-emerald-500';
             modal.classList.remove('hidden');
             modal.classList.add('flex');
         });
     });
+
+    function showAnalyzingModal(e) {
+        if(e) e.preventDefault();
+        const modal = document.getElementById('assign-modal');
+        document.getElementById('modal-title').textContent = 'Analizando Perfil Clínico';
+        document.getElementById('modal-text').textContent = 'La Inteligencia Artificial está procesando los datos...';
+        document.getElementById('modal-icon').className = 'bi bi-cpu text-2xl text-emerald-500 animate-pulse';
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        window.location.href = '?regenerar=true';
+    }
 </script>
 {% endblock %}

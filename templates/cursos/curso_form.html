@@ -46,6 +46,7 @@
             {% endif %}
         </div>
         
+        {% if accion != 'crear' %}
         <!-- Descripción -->
         <div class="mb-6">
             <label class="block text-base font-medium mb-2">
@@ -56,6 +57,7 @@
             <p class="mt-2 text-sm text-red-500">{{ form.descripcion.errors.0 }}</p>
             {% endif %}
         </div>
+        {% endif %}
         
         <!-- Categoría -->
         <div class="mb-6">
@@ -68,6 +70,7 @@
             {% endif %}
         </div>
 
+        {% if accion != 'crear' %}
         <hr class="my-8 border-gray-200">
         
         <h3 class="text-xl font-bold mb-4 text-primary"><i class="bi bi-file-earmark-medical me-2"></i>Estructura Exigida (Protocolo ELEAM/SENAMA)</h3>
@@ -103,6 +106,7 @@
             {{ form.formato_evaluacion }}
             <p class="text-xs text-secondary mt-1">{{ form.formato_evaluacion.help_text }}</p>
         </div>
+        {% endif %}
         
         <hr class="my-8 border-gray-200">
         

@@ -324,34 +324,62 @@ def dashboard_ia(request):
         
         context['fecha_generacion'] = fecha_generacion
         if tipo == 'upskilling' and not resultado_ia.get('error'):
-            from django.db.models import Count, Q
+            from django.db.models import Count, Q, Exists, OuterRef
             from usuarios.models import Usuario
+            from cursos.models import InscripcionCurso
             
             upskilling_list = resultado_ia.get('upskilling', [])
             filtered_upskilling = []
+            needs_save = False
+            
             for item in upskilling_list:
                 try:
                     c_id = int(item.get('curso_id', 0))
-                    # Colaboradores que NO están inscritos en este curso
-                    colabs = Usuario.objects.filter(rol='colaborador').exclude(
-                        inscripciones__curso_id=c_id
-                    )
                     
-                    roles = item.get('roles_ideales', [])
-                    if roles and isinstance(roles, list):
-                        q_roles = Q()
-                        for r in roles:
-                            q_roles |= Q(cargo__nombre__icontains=r.split('/')[0].strip())
-                        # Filtramos manteniendo solo los que coinciden con algún rol ideal
-                        colabs = colabs.filter(q_roles)
-
-                    if colabs.exists():
-                        # Anotar cuántos cursos pendientes tienen
-                        colabs = colabs.annotate(
+                    if 'sugeridos_ids' not in item:
+                        colabs = Usuario.objects.filter(rol='colaborador').exclude(
+                            inscripciones__curso_id=c_id
+                        )
+                        patologias = item.get('patologias_objetivo', [])
+                        if patologias and isinstance(patologias, list):
+                            q_pats = Q()
+                            for p in patologias:
+                                q_pats |= Q(pacientes_asignados__patologias__icontains=p.strip())
+                            colabs = colabs.filter(q_pats).distinct()
+                        else:
+                            # Fallback si no hay patologías, filtramos por rol por defecto
+                            roles = item.get('roles_ideales', [])
+                            if roles and isinstance(roles, list):
+                                q_roles = Q()
+                                for r in roles:
+                                    q_roles |= Q(cargo__nombre__icontains=r.split('/')[0].strip())
+                                colabs = colabs.filter(q_roles)
+                            
+                        sugeridos = list(colabs.annotate(
                             cursos_pendientes=Count('inscripciones', filter=Q(inscripciones__estado__in=['asignado', 'en_progreso']))
-                        ).order_by('cursos_pendientes')[:3]
+                        ).order_by('cursos_pendientes')[:3].values_list('id', flat=True))
                         
-                        item['colaboradores_sugeridos'] = colabs
+                        item['sugeridos_ids'] = sugeridos
+                        needs_save = True
+
+                except (ValueError, TypeError):
+                    pass
+            
+            # Guardamos el JSON limpio en la base de datos ANTES de inyectarle QuerySets
+            if needs_save and reporte:
+                reporte.datos_json = resultado_ia
+                reporte.save()
+                
+            # Ahora inyectamos los QuerySets para que el template los pueda renderizar
+            for item in upskilling_list:
+                try:
+                    c_id = int(item.get('curso_id', 0))
+                    if item.get('sugeridos_ids'):
+                        colabs_finales = Usuario.objects.filter(id__in=item['sugeridos_ids']).annotate(
+                            cursos_pendientes=Count('inscripciones', filter=Q(inscripciones__estado__in=['asignado', 'en_progreso'])),
+                            ya_inscrito=Exists(InscripcionCurso.objects.filter(usuario=OuterRef('pk'), curso_id=c_id))
+                        )
+                        item['colaboradores_sugeridos'] = colabs_finales
                         filtered_upskilling.append(item)
                 except (ValueError, TypeError):
                     pass
@@ -648,3 +676,208 @@ def registrar_tiempo_sesion(request):
             return JsonResponse({'status': 'error', 'msg': str(e)})
     return JsonResponse({'status': 'invalid'})
 
+@login_required
+@admin_required
+def descargar_pdf_art33(request):
+    fecha_inicio = request.GET.get('fecha_inicio')
+    fecha_fin = request.GET.get('fecha_fin')
+    cargo_id = request.GET.get('cargo')
+
+    from cursos.models import Curso
+    nombres_cursos = Curso.objects.values_list('titulo', flat=True)
+
+    queryset = RegistroSesionArt33.objects.select_related('usuario', 'usuario__cargo').filter(modulo_visitado__in=nombres_cursos)
+    
+    if fecha_inicio:
+        queryset = queryset.filter(fecha_entrada__gte=fecha_inicio)
+    if fecha_fin:
+        queryset = queryset.filter(fecha_entrada__lte=fecha_fin + " 23:59:59")
+    if cargo_id:
+        queryset = queryset.filter(usuario__cargo_id=cargo_id)
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="registro_asistencia_digital_Art33.pdf"'
+
+    doc = SimpleDocTemplate(response, pagesize=landscape(letter), rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+    elements = []
+    styles = getSampleStyleSheet()
+
+    title_style = ParagraphStyle(name='TitleStyle', parent=styles['Heading1'], alignment=1, fontSize=16, spaceAfter=10)
+    elements.append(Paragraph("Registro de Asistencia Digital (Art. 33)", title_style))
+
+    admin_name = request.user.get_full_name() or request.user.username
+    subtitle_text = f"Generado el {timezone.now().strftime('%d/%m/%Y %H:%M')} por {admin_name}"
+    elements.append(Paragraph(subtitle_text, styles['Normal']))
+    elements.append(Spacer(1, 20))
+
+    data = [['FECHA', 'RUT', 'COLABORADOR', 'CARGO', 'MÓDULO', 'ENTRADA', 'SALIDA', 'MINUTOS', 'DIRECCIÓN IP']]
+    
+    for registro in queryset:
+        if registro.fecha_salida:
+            minutos = int((registro.fecha_salida - registro.fecha_entrada).total_seconds() / 60)
+            salida_str = registro.fecha_salida.strftime('%H:%M:%S')
+        else:
+            minutos = 0
+            salida_str = 'En curso'
+
+        cargo_nombre = registro.usuario.cargo.nombre if registro.usuario.cargo else 'Sin Cargo'
+        
+        data.append([
+            registro.fecha_entrada.strftime('%d/%m/%Y'),
+            registro.usuario.rut,
+            registro.usuario.get_full_name() or registro.usuario.username,
+            cargo_nombre,
+            registro.modulo_visitado,
+            registro.fecha_entrada.strftime('%H:%M:%S'),
+            salida_str,
+            f"{minutos} min",
+            registro.direccion_ip or 'N/A'
+        ])
+
+    t = Table(data, repeatRows=1)
+    
+    style_cmds = [
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1C314A')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#E0E0E0')),
+        ('FONTSIZE', (0, 1), (-1, -1), 8),
+    ]
+    
+    for i in range(1, len(data)):
+        bg_color = colors.whitesmoke if i % 2 != 0 else colors.white
+        style_cmds.append(('BACKGROUND', (0, i), (-1, i), bg_color))
+        
+    t.setStyle(TableStyle(style_cmds))
+    elements.append(t)
+
+    doc.build(elements)
+    return response
+
+
+@login_required
+@admin_required
+def descargar_zip_certificados(request):
+    fecha_inicio = request.GET.get('fecha_inicio')
+    fecha_fin = request.GET.get('fecha_fin')
+    cargo_id = request.GET.get('cargo')
+
+    queryset = InscripcionCurso.objects.select_related('usuario', 'usuario__cargo', 'curso').filter(estado__in=['completado', 'en_progreso'])
+
+    if fecha_inicio:
+        queryset = queryset.filter(fecha_asignacion__gte=fecha_inicio)
+    if fecha_fin:
+        queryset = queryset.filter(fecha_asignacion__lte=fecha_fin + " 23:59:59")
+    if cargo_id:
+        queryset = queryset.filter(usuario__cargo_id=cargo_id)
+
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for insc in queryset:
+            rut_folder = f"rut_{insc.usuario.rut.replace('.', '_').replace('-', '_')}"
+            
+            pdf_buffer = io.BytesIO()
+            doc = SimpleDocTemplate(pdf_buffer, pagesize=letter)
+            styles = getSampleStyleSheet()
+            elements = []
+            title = "Certificado de Aprobación" if insc.estado == 'completado' else "Constancia de Alumno Regular"
+            elements.append(Paragraph(title, styles['Heading1']))
+            elements.append(Spacer(1, 20))
+            elements.append(Paragraph(f"El usuario {insc.usuario.get_full_name()} ({insc.usuario.rut})", styles['Normal']))
+            verb = "ha completado satisfactoriamente" if insc.estado == 'completado' else "se encuentra cursando actualmente"
+            elements.append(Paragraph(f"{verb} el curso {insc.curso.titulo}.", styles['Normal']))
+            
+            doc.build(elements)
+            
+            pdf_content = pdf_buffer.getvalue()
+            pdf_buffer.close()
+
+            base_folder = "certificados_cursos" if insc.estado == 'completado' else "certificado_alumno_regular"
+            file_name = f"certificado_{insc.curso.titulo[:10].replace(' ', '_').upper()}.pdf"
+            
+            zip_file.writestr(f"{base_folder}/{rut_folder}/{file_name}", pdf_content)
+
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type='application/zip')
+    response['Content-Disposition'] = 'attachment; filename="documentos_capacitacion.zip"'
+    return response
+
+
+import json
+from django.http import JsonResponse
+
+@login_required
+def registrar_tiempo_sesion(request):
+    if request.method == 'POST' and request.user.rol == 'colaborador':
+        try:
+            data = json.loads(request.body)
+            curso_id = data.get('curso_id')
+            if not curso_id:
+                return JsonResponse({'status': 'error', 'msg': 'no curso_id'})
+                
+            from cursos.models import Curso
+            curso = Curso.objects.get(id=curso_id)
+            
+            from datetime import timedelta
+            now = timezone.now()
+            
+            # Buscamos la última sesión que haya tenido
+            sesion = RegistroSesionArt33.objects.filter(
+                usuario=request.user,
+                modulo_visitado=curso.titulo,
+            ).order_by('-fecha_salida').first()
+            
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                ip = x_forwarded_for.split(',')[0]
+            else:
+                ip = request.META.get('REMOTE_ADDR')
+                
+            # Si existe una sesión y su último latido de salida fue hace MENOS de 15 minutos, la continuamos.
+            # Si pasaron más de 15 minutos de inactividad, se considera una sesión totalmente nueva.
+            if sesion and sesion.fecha_salida and (now - sesion.fecha_salida) <= timedelta(minutes=15):
+                sesion.fecha_salida = now
+                sesion.direccion_ip = ip
+                sesion.save()
+            else:
+                RegistroSesionArt33.objects.create(
+                    usuario=request.user,
+                    modulo_visitado=curso.titulo,
+                    fecha_entrada=now,
+                    fecha_salida=now,
+                    direccion_ip=ip
+                )
+            return JsonResponse({'status': 'ok'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'msg': str(e)})
+    return JsonResponse({'status': 'invalid'})
+
+@login_required
+@admin_required
+def asignar_curso_ia(request):
+    from django.http import JsonResponse
+    from django.shortcuts import get_object_or_404
+    from cursos.models import Curso, InscripcionCurso
+    from usuarios.models import Usuario
+
+    if request.method == 'POST':
+        curso_id = request.POST.get('curso_id')
+        colaborador_id = request.POST.get('colaborador_id')
+        
+        if curso_id and colaborador_id:
+            curso = get_object_or_404(Curso, id=curso_id)
+            usuario = get_object_or_404(Usuario, id=colaborador_id)
+            
+            insc, created = InscripcionCurso.objects.get_or_create(
+                curso=curso, 
+                usuario=usuario, 
+                defaults={'estado': 'asignado'}
+            )
+            
+            msg = f'¡{usuario.get_full_name()} ha sido inscrito exitosamente en "{curso.titulo}"!' if created else f'{usuario.get_full_name()} ya estaba inscrito en este curso.'
+            return JsonResponse({'status': 'success', 'message': msg})
+                
+    return JsonResponse({'status': 'error', 'message': 'Datos inválidos'})

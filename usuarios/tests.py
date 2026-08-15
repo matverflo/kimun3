@@ -415,22 +415,6 @@ class UsuarioListViewTests(TestCase):
         self.client = Client()
         self.admin = Usuario.objects.create_user(
             username='admin', password='testpass', rol='admin', rut='11111111-1'
-        )
-        self.docente = Usuario.objects.create_user(
-            username='docente', password='testpass', rol='docente', rut='22222222-2'
-        )
-
-    def test_usuario_list_requires_admin(self):
-        self.client.login(username='docente', password='testpass')
-        response = self.client.get(reverse('usuarios:usuario_list'))
-        self.assertEqual(response.status_code, 403)
-
-    def test_usuario_list_accessible_by_admin(self):
-        self.client.login(username='admin', password='testpass')
-        response = self.client.get(reverse('usuarios:usuario_list'))
-        self.assertEqual(response.status_code, 200)
-
-
 class UsuarioCreateViewTests(TestCase):
     def setUp(self):
         self.client = Client()

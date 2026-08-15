@@ -232,20 +232,6 @@ def password_change(request):
 
 @login_required
 @admin_required
-def usuario_list(request):
-    usuarios = Usuario.objects.select_related('cargo').order_by('-date_joined')
-    paginator = Paginator(usuarios, 20)
-    page_number = request.GET.get('page', 1)
-    usuarios_page = paginator.get_page(page_number)
-    
-    return render(request, 'usuarios/usuario_list.html', {
-        'usuarios': usuarios_page,
-        'page_obj': usuarios_page
-    })
-
-
-@login_required
-@admin_required
 def usuario_create(request):
     from usuarios.models import AreaCargo
     areas = AreaCargo.objects.all()
@@ -257,9 +243,13 @@ def usuario_create(request):
         if form.is_valid():
             usuario = form.save()
             messages.success(request, f'Usuario "{usuario.get_full_name()}" creado exitosamente.')
-            return redirect('usuarios:usuario_list')
+            return redirect('pacientes:dashboard_erp')
     else:
-        form = UsuarioForm()
+        rol_inicial = request.GET.get('rol', '')
+        initial_data = {}
+        if rol_inicial in ['colaborador', 'docente', 'admin']:
+            initial_data['rol'] = rol_inicial
+        form = UsuarioForm(initial=initial_data)
     
     return render(request, 'usuarios/usuario_form.html', {
         'form': form,
@@ -284,7 +274,7 @@ def usuario_edit(request, pk):
         if form.is_valid():
             usuario = form.save()
             messages.success(request, f'Usuario "{usuario.get_full_name()}" actualizado.')
-            return redirect('usuarios:usuario_list')
+            return redirect('pacientes:dashboard_erp')
     else:
         form = UsuarioForm(instance=usuario)
     
@@ -304,13 +294,14 @@ def usuario_delete(request, pk):
     
     if request.method == 'POST':
         if usuario == request.user:
-            messages.error(request, 'No puedes eliminar tu propia cuenta.')
-            return redirect('usuarios:usuario_list')
+            messages.error(request, 'No puedes darte de baja a ti mismo.')
+            return redirect('pacientes:dashboard_erp')
         
         nombre = usuario.get_full_name() or usuario.username
-        usuario.delete()
-        messages.success(request, f'Usuario "{nombre}" eliminado.')
-        return redirect('usuarios:usuario_list')
+        usuario.is_active = False
+        usuario.save()
+        messages.success(request, f'Usuario "{nombre}" dado de baja exitosamente.')
+        return redirect('pacientes:dashboard_erp')
     
     return render(request, 'usuarios/usuario_confirm_delete.html', {'usuario': usuario})
 

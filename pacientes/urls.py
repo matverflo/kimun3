@@ -4,8 +4,11 @@ from . import views
 app_name = 'pacientes'
 
 urlpatterns = [
-    path('erp/', views.dashboard_erp, name='dashboard_erp'),
+    path('', views.dashboard_erp, name='dashboard_erp'),
+    path('paciente/crear/', views.crear_paciente, name='crear_paciente'),
+    path('paciente/<int:paciente_id>/desactivar/', views.desactivar_paciente, name='desactivar_paciente'),
     path('expediente/colaborador/<int:user_id>/', views.expediente_colaborador, name='expediente_colaborador'),
+    path('expediente/docente/<int:user_id>/', views.expediente_docente, name='expediente_docente'),
     path('certificado/<int:inscripcion_id>/', views.descargar_certificado, name='descargar_certificado'),
     path('expediente/colaborador/<int:user_id>/asignar-paciente/', views.asignar_paciente, name='asignar_paciente'),
     path('expediente/colaborador/<int:user_id>/desvincular-paciente/<int:paciente_id>/', views.desvincular_paciente, name='desvincular_paciente'),

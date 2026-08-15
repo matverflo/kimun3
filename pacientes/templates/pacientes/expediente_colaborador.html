@@ -25,7 +25,17 @@
         </div>
         
         <div class="flex-1">
-            <h1 class="text-2xl font-bold" style="color: var(--color-text)">{{ colaborador.get_full_name }}</h1>
+            <div class="flex items-center gap-3">
+                <h1 class="text-2xl font-bold" style="color: var(--color-text)">{{ colaborador.get_full_name }}</h1>
+                <div class="flex items-center gap-1">
+                    <a href="{% url 'usuarios:usuario_edit' colaborador.id %}" title="Editar Perfil" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-blue-500 transition-colors rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30">
+                        <i class="bi bi-pencil-square text-lg"></i>
+                    </a>
+                    <a href="{% url 'usuarios:usuario_delete' colaborador.id %}" title="Dar de baja" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30">
+                        <i class="bi bi-trash3 text-lg"></i>
+                    </a>
+                </div>
+            </div>
             <p class="text-gray-500 dark:text-gray-400 mt-1">{{ colaborador.cargo.nombre }} &bull; RUT: {{ colaborador.rut }}</p>
             {% if colaborador.especialidades_externas %}
             <div class="mt-3">
@@ -35,15 +45,21 @@
             {% endif %}
         </div>
         
-        <div class="shrink-0 w-full md:w-auto text-center p-4 rounded-xl border" style="background-color: var(--color-surface-raised); border-color: var(--color-border);">
-            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Carga de Pacientes</p>
-            <div class="flex items-end justify-center gap-2">
-                <span class="text-3xl font-bold" style="color: var(--color-primary)">{{ pacientes_actuales.count }}</span>
-                <span class="text-gray-400 mb-1">/ {{ limite_actual }}</span>
+        <div class="shrink-0 w-full md:w-auto">
+            <div class="text-center p-4 rounded-xl border flex flex-col justify-center" style="background-color: var(--color-surface-raised); border-color: var(--color-border);">
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Carga de Pacientes</p>
+                <div class="flex items-end justify-center gap-2">
+                    <span class="text-3xl font-bold" style="color: var(--color-primary)">{{ pacientes_actuales.count }}</span>
+                    {% if limite_actual > 0 %}
+                    <span class="text-gray-400 mb-1">/ {{ limite_actual }}</span>
+                    {% endif %}
+                </div>
+                {% if limite_actual > 0 %}
+                <button class="mt-2 text-xs font-medium hover:underline flex items-center justify-center gap-1 w-full" style="color: var(--color-info)">
+                    <i class="bi bi-pencil"></i> Modificar Límite
+                </button>
+                {% endif %}
             </div>
-            <button class="mt-2 text-xs font-medium hover:underline flex items-center justify-center gap-1 w-full" style="color: var(--color-info)">
-                <i class="bi bi-pencil"></i> Modificar Límite (Excepción)
-            </button>
         </div>
     </div>
 

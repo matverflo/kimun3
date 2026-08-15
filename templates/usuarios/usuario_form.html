@@ -7,94 +7,104 @@
 <nav class="text-sm mb-4" style="color: var(--color-text-secondary);">
     <a href="{% url 'inicio' %}">Inicio</a>
     <i class="bi bi-chevron-right text-xs mx-1"></i>
-    <a href="{% url 'usuarios:usuario_list' %}">Usuarios</a>
+    <a href="{% url 'pacientes:dashboard_erp' %}">ERP</a>
     <i class="bi bi-chevron-right text-xs mx-1"></i>
     <span>{% if accion == 'crear' %}Nuevo{% else %}Editar{% endif %}</span>
 </nav>
 {% endblock %}
 
 {% block content %}
-<div class="fade-in max-w-2xl mx-auto">
+<div class="max-w-7xl mx-auto px-4 md:px-6 py-8 fade-in">
     <div class="mb-6">
-        <a href="{% url 'usuarios:usuario_list' %}" class="text-sm hover:underline" style="color: var(--color-text-secondary);">
-            <i class="bi bi-arrow-left"></i> Volver a Usuarios
-        </a>
-        <h1 class="text-3xl font-bold mt-2">
-            {% if accion == 'crear' %}Nuevo{% else %}Editar{% endif %} Usuario
+        <h1 class="text-2xl font-bold" style="color: var(--color-text);">
+            {% if accion == 'crear' %}Añadir Nuevo Usuario{% else %}Editar Usuario{% endif %}
         </h1>
+        <p class="mt-1" style="color: var(--color-text-secondary);">
+            {% if accion == 'crear' %}Registra los datos personales y de cuenta del nuevo usuario.{% else %}Actualiza los datos del usuario en el sistema.{% endif %}
+        </p>
     </div>
 
-    <form method="post" class="space-y-6">
-        {% csrf_token %}
-        
-        <div class="hybrid-card rounded-xl p-6">
-            <h2 class="text-lg font-semibold mb-4">Información de Cuenta</h2>
-            <div class="grid gap-4">
-                <div>
-                    <label class="block text-sm font-medium mb-2">Nombre de usuario *</label>
+    <div class="hybrid-card p-8 rounded-2xl">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Nombre de Usuario -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold" style="color: var(--color-text);">Nombre de usuario *</label>
                     <input type="text" name="username" required 
                            value="{{ form.username.value|default:'' }}"
-                           class="w-full px-4 py-3 rounded-lg input-field">
+                           class="w-full px-4 py-2 rounded-xl border focus:ring-2 outline-none transition-all text-sm"
+                           style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);">
                 </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">
+
+                <!-- Contraseña -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold" style="color: var(--color-text);">
                         {% if accion == 'crear' %}Contraseña *{% else %}Nueva Contraseña (opcional){% endif %}
                     </label>
                     <input type="password" name="password" 
-                           class="w-full px-4 py-3 rounded-lg input-field"
+                           class="w-full px-4 py-2 rounded-xl border focus:ring-2 outline-none transition-all text-sm"
+                           style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
                            {% if accion == 'crear' %}required{% endif %}>
                 </div>
-            </div>
-        </div>
 
-        <div class="hybrid-card rounded-xl p-6">
-            <h2 class="text-lg font-semibold mb-4">Información Personal</h2>
-            <div class="grid gap-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Nombre</label>
-                        <input type="text" name="first_name" 
-                               value="{{ form.first_name.value|default:'' }}"
-                               class="w-full px-4 py-3 rounded-lg input-field">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Apellido</label>
-                        <input type="text" name="last_name" 
-                               value="{{ form.last_name.value|default:'' }}"
-                               class="w-full px-4 py-3 rounded-lg input-field">
-                    </div>
+                <!-- Nombres -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold" style="color: var(--color-text);">Nombres</label>
+                    <input type="text" name="first_name" 
+                           value="{{ form.first_name.value|default:'' }}"
+                           class="w-full px-4 py-2 rounded-xl border focus:ring-2 outline-none transition-all text-sm"
+                           style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);">
                 </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">Email</label>
+
+                <!-- Apellidos -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold" style="color: var(--color-text);">Apellidos</label>
+                    <input type="text" name="last_name" 
+                           value="{{ form.last_name.value|default:'' }}"
+                           class="w-full px-4 py-2 rounded-xl border focus:ring-2 outline-none transition-all text-sm"
+                           style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);">
+                </div>
+
+                <!-- Email -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold" style="color: var(--color-text);">Email</label>
                     <input type="email" name="email" 
                            value="{{ form.email.value|default:'' }}"
-                           class="w-full px-4 py-3 rounded-lg input-field">
+                           class="w-full px-4 py-2 rounded-xl border focus:ring-2 outline-none transition-all text-sm"
+                           style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);">
                 </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2">RUT *</label>
+
+                <!-- RUT -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold" style="color: var(--color-text);">RUT *</label>
                     <input type="text" name="rut" required id="rut-input"
                            value="{{ form.rut.value|default:'' }}"
-                           class="w-full px-4 py-3 rounded-lg input-field"
+                           class="w-full px-4 py-2 rounded-xl border focus:ring-2 outline-none transition-all text-sm"
+                           style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);"
                            placeholder="Ej: 12345678-9" maxlength="12">
                 </div>
-            </div>
-        </div>
 
-        <div class="hybrid-card rounded-xl p-6">
-            <h2 class="text-lg font-semibold mb-4">Rol y Cargo</h2>
-            <div class="grid gap-4">
-                <div>
-                    <label class="block text-sm font-medium mb-2">Rol *</label>
-                    <select name="rol" required class="w-full px-4 py-3 rounded-lg input-field">
+                <!-- Rol -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold" style="color: var(--color-text);">Rol *</label>
+                    <select name="rol" required 
+                            class="w-full px-4 py-2 rounded-xl border focus:ring-2 outline-none transition-all text-sm"
+                            style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);">
                         <option value="">Seleccionar rol</option>
                         <option value="admin" {% if form.rol.value == 'admin' %}selected{% endif %}>Administrador</option>
                         <option value="docente" {% if form.rol.value == 'docente' %}selected{% endif %}>Docente</option>
                         <option value="colaborador" {% if form.rol.value == 'colaborador' %}selected{% endif %}>Colaborador</option>
                     </select>
                 </div>
-                <div id="cargo-container" style="display: none;">
-                    <label class="block text-sm font-medium mb-2">Cargo</label>
-                    <select name="cargo" id="cargo-select" class="w-full px-4 py-3 rounded-lg input-field">
+
+                <!-- Cargo (Dependiente) -->
+                <div class="space-y-2" id="cargo-container" style="display: none;">
+                    <label class="block text-sm font-bold" style="color: var(--color-text);">Cargo</label>
+                    <select name="cargo" id="cargo-select" 
+                            class="w-full px-4 py-2 rounded-xl border focus:ring-2 outline-none transition-all text-sm"
+                            style="background-color: var(--color-bg); border-color: var(--color-border); color: var(--color-text);">
                         <option value="">Sin cargo asignado</option>
                         {% for area in areas_colaborador %}
                         <option value="{{ area.pk }}" {% if form.cargo.value == area.pk|stringformat:'s' %}selected{% endif %}>
@@ -104,19 +114,20 @@
                     </select>
                 </div>
             </div>
-        </div>
 
-        <div class="flex justify-end gap-4">
-            <a href="{% url 'usuarios:usuario_list' %}" 
-               class="px-6 py-2.5 rounded-lg font-medium" style="color: var(--color-text-secondary);">
-                Cancelar
-            </a>
-            <button type="submit" class="btn-primary px-6 py-2.5 rounded-lg font-medium">
-                <i class="bi bi-check-lg"></i> 
-                {% if accion == 'crear' %}Crear Usuario{% else %}Guardar Cambios{% endif %}
-            </button>
-        </div>
-    </form>
+            <!-- Acciones -->
+            <div class="pt-6 flex justify-end gap-4 border-t" style="border-color: var(--color-border);">
+                <a href="{% url 'pacientes:dashboard_erp' %}" class="px-5 py-2.5 rounded-lg font-medium transition-colors border"
+                   style="border-color: var(--color-border); color: var(--color-text-secondary);">
+                    Cancelar
+                </a>
+                <button type="submit" class="btn-primary px-5 py-2.5 rounded-lg font-medium">
+                    <i class="bi bi-save me-2"></i>
+                    {% if accion == 'crear' %}Guardar Usuario{% else %}Actualizar Usuario{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>

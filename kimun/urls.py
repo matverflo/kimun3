@@ -14,7 +14,7 @@ urlpatterns = [
     path('calendario/', include('calendario.urls')),
     path('anuncios/', include('anuncios.urls')),
     path('tareas/', include('tareas.urls')),
-    path('pacientes/', include('pacientes.urls')),
+    path('erp/', include('pacientes.urls')),
     path('', inicio, name='inicio'),
 ]
 

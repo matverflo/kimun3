@@ -24,6 +24,7 @@ class Paciente(models.Model):
     )
     
     fecha_ingreso = models.DateField(auto_now_add=True, verbose_name='Fecha de Ingreso')
+    activo = models.BooleanField(default=True, verbose_name='Paciente Activo')
     
     class Meta:
         verbose_name = 'Paciente'

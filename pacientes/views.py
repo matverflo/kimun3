@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
 from .models import Paciente
@@ -8,26 +8,83 @@ Usuario = get_user_model()
 
 @login_required
 def dashboard_erp(request):
-    pacientes = Paciente.objects.all().order_by('-fecha_ingreso')
-    colaboradores = Usuario.objects.filter(rol='colaborador').annotate(
+    pacientes = Paciente.objects.filter(activo=True).order_by('-fecha_ingreso')
+    colaboradores = Usuario.objects.filter(rol='colaborador', is_active=True).annotate(
         cursos_realizados=Count('inscripciones', filter=Q(inscripciones__estado='completado')),
         cursos_en_curso=Count('inscripciones', filter=Q(inscripciones__estado='en_progreso')),
         cursos_pendientes=Count('inscripciones', filter=Q(inscripciones__estado='asignado'))
     ).order_by('first_name')
     
-    docentes = Usuario.objects.filter(rol__in=['docente', 'admin']).annotate(
+    docentes = Usuario.objects.filter(rol__in=['docente', 'admin'], is_active=True).annotate(
         total_cursos=Count('cursos_creados')
     ).order_by('first_name')
+    
+    from usuarios.models import AreaCargo
+    cargos = AreaCargo.objects.all().order_by('nombre')
     
     context = {
         'pacientes': pacientes,
         'colaboradores': colaboradores,
         'docentes': docentes,
+        'cargos': cargos,
         'total_pacientes': pacientes.count(),
         'total_colaboradores': colaboradores.count(),
         'total_docentes': docentes.count(),
     }
     return render(request, 'pacientes/dashboard.html', context)
+
+
+@login_required
+def crear_paciente(request):
+    from django.shortcuts import redirect
+    from django.contrib import messages
+    if request.user.rol != 'admin':
+        return redirect('inicio')
+        
+    if request.method == 'POST':
+        rut = request.POST.get('rut')
+        nombre_completo = request.POST.get('nombre_completo')
+        edad = request.POST.get('edad')
+        nivel_dependencia = request.POST.get('nivel_dependencia')
+        patologias = request.POST.get('patologias', '')
+        requerimientos = request.POST.get('requerimientos_especiales', '')
+        
+        try:
+            Paciente.objects.create(
+                rut=rut,
+                nombre_completo=nombre_completo,
+                edad=edad,
+                nivel_dependencia=nivel_dependencia,
+                patologias=patologias,
+                requerimientos_especiales=requerimientos
+            )
+            messages.success(request, f'Residente {nombre_completo} creado correctamente.')
+            return redirect('pacientes:dashboard_erp')
+        except Exception as e:
+            messages.error(request, f'Error al crear residente: {str(e)}')
+            
+    return render(request, 'pacientes/crear_paciente.html')
+
+
+@login_required
+def desactivar_paciente(request, paciente_id):
+    from django.contrib import messages
+    if request.user.rol != 'admin':
+        return redirect('inicio')
+        
+    paciente = get_object_or_404(Paciente, id=paciente_id)
+    
+    if request.method == 'POST':
+        paciente.activo = False
+        paciente.save()
+        messages.success(request, f'Paciente "{paciente.nombre_completo}" dado de baja exitosamente.')
+        return redirect('pacientes:dashboard_erp')
+        
+    # Podemos reusar un template de confirmación genérico o usar el de usuarios si se adapta.
+    # Pero lo mejor es crear uno específico para pacientes, aunque si es un modal/sweetalert no hace falta.
+    # Dado que usuario_delete renderiza `usuario_confirm_delete.html`, usaremos `paciente_confirm_delete.html`
+    return render(request, 'pacientes/paciente_confirm_delete.html', {'paciente': paciente})
+
 
 @login_required
 def expediente_colaborador(request, user_id):
@@ -38,7 +95,7 @@ def expediente_colaborador(request, user_id):
     if request.user.rol != 'admin':
         return redirect('inicio')
         
-    colaborador = get_object_or_404(Usuario, id=user_id, rol='colaborador')
+    colaborador = get_object_or_404(Usuario, id=user_id)
     from django.db.models import Case, When, Value, IntegerField
     inscripciones = colaborador.inscripciones.select_related('curso').annotate(
         orden_estado=Case(
@@ -158,6 +215,37 @@ def expediente_colaborador(request, user_id):
         'cursos_disponibles': cursos_disponibles,
     }
     return render(request, 'pacientes/expediente_colaborador.html', context)
+
+
+@login_required
+def expediente_docente(request, user_id):
+    if request.user.rol != 'admin':
+        return redirect('inicio')
+        
+    from usuarios.models import Usuario
+    from cursos.models import Curso, InscripcionCurso
+    
+    docente = get_object_or_404(Usuario, id=user_id)
+    
+    cursos_creados = Curso.objects.filter(docente_creador=docente).order_by('-fecha_creacion')
+    
+    # Basic stats
+    total_cursos = cursos_creados.count()
+    cursos_publicados = cursos_creados.filter(estado='publicado').count()
+    
+    total_inscritos = InscripcionCurso.objects.filter(curso__in=cursos_creados, estado__in=['asignado', 'en_progreso']).count()
+    total_egresados = InscripcionCurso.objects.filter(curso__in=cursos_creados, estado='completado').count()
+    
+    context = {
+        'docente': docente,
+        'cursos_creados': cursos_creados,
+        'total_cursos': total_cursos,
+        'cursos_publicados': cursos_publicados,
+        'total_inscritos': total_inscritos,
+        'total_egresados': total_egresados,
+    }
+    return render(request, 'pacientes/expediente_docente.html', context)
+
 
 
 @login_required
@@ -560,6 +648,22 @@ def sugerencia_ia(request, paciente_id):
     else:
         resultado_ia = obtener_sugerencia_asignacion(paciente_id)
         if not resultado_ia.get('error'):
+            # Filtrar y ordenar las recomendaciones
+            if 'recomendaciones' in resultado_ia:
+                try:
+                    asignados_ids = set(paciente.colaboradores.values_list('id', flat=True))
+                    buenas_recomendaciones = []
+                    for rec in resultado_ia['recomendaciones']:
+                        m_rate = int(rec.get('match_rate', 0))
+                        # Dejamos pasar si ya está asignado o si tiene buena compatibilidad
+                        if rec.get('id_colaborador') in asignados_ids or m_rate >= 60:
+                            buenas_recomendaciones.append(rec)
+                    
+                    buenas_recomendaciones.sort(key=lambda x: int(x.get('match_rate', 0)), reverse=True)
+                    resultado_ia['recomendaciones'] = buenas_recomendaciones
+                except Exception:
+                    pass
+            
             reporte = ReporteAsignacionIA.objects.create(
                 paciente=paciente,
                 datos_json=resultado_ia
@@ -572,7 +676,8 @@ def sugerencia_ia(request, paciente_id):
     context = {
         'paciente': paciente,
         'resultado_ia': resultado_ia,
-        'fecha_generacion': fecha_generacion
+        'fecha_generacion': fecha_generacion,
+        'asignados_ids': list(paciente.colaboradores.values_list('id', flat=True))
     }
     return render(request, 'pacientes/sugerencia_ia.html', context)
 

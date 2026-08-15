@@ -9,7 +9,7 @@
     <!-- Botón Volver -->
     <div class="fade-in">
         <a href="{% url 'pacientes:dashboard_erp' %}" class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
-            <i class="bi bi-arrow-left"></i> Volver al Panel
+            <i class="bi bi-arrow-left"></i> Volver al Dashboard
         </a>
     </div>
 
@@ -25,7 +25,14 @@
         <!-- Info Principal -->
         <div class="flex-1 space-y-2 relative z-10">
             <div class="flex flex-wrap items-center gap-3">
-                <h1 class="text-3xl font-bold tracking-tight" style="color: var(--color-text)">{{ paciente.nombre_completo }}</h1>
+                <div class="flex items-center gap-3">
+                    <h1 class="text-3xl font-bold tracking-tight" style="color: var(--color-text)">{{ paciente.nombre_completo }}</h1>
+                    <div class="flex items-center gap-1">
+                        <a href="{% url 'pacientes:desactivar_paciente' paciente.id %}" title="Dar de baja" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30">
+                            <i class="bi bi-trash3 text-lg"></i>
+                        </a>
+                    </div>
+                </div>
                 
                 {% if paciente.nivel_dependencia == 'leve' %}
                     <span class="px-3 py-1 text-sm rounded-full font-semibold border" style="background-color: var(--color-success-bg); color: var(--color-success); border-color: rgba(22, 163, 74, 0.2)">Dependencia Leve</span>
@@ -125,63 +132,7 @@
         <!-- Right Column (Personal y Rutinas) -->
         <div class="space-y-8 fade-in stagger-3">
             
-            <!-- Tareas y Rutinas Diarias -->
-            <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-sm" style="border-color: var(--color-border);">
-                <div class="px-6 py-5 border-b flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
-                    <h2 class="text-lg font-bold flex items-center gap-2" style="color: var(--color-text)">
-                        <i class="bi bi-card-checklist" style="color: var(--color-primary)"></i> Rutina y Medicina (Hoy)
-                    </h2>
-                    <a href="{% url 'pacientes:descargar_historial_rutinas' paciente.id %}" class="text-gray-400 hover:text-blue-500 transition-colors" title="Descargar Historial">
-                        <i class="bi bi-file-earmark-pdf text-xl"></i>
-                    </a>
-                </div>
-                
-                <div class="p-6">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Pendientes ({{ rutinas_pendientes.count }})</h4>
-                    <div class="space-y-3 mb-6">
-                        {% for rutina in rutinas_pendientes %}
-                        <div class="flex items-center justify-between p-3 rounded-lg border bg-white dark:bg-slate-800 shadow-sm" style="border-color: var(--color-border);">
-                            <div>
-                                <p class="font-semibold text-sm" style="color: var(--color-text)">{{ rutina.titulo }}</p>
-                                <p class="text-xs text-gray-500 mt-0.5" title="Cualquier colaborador puede marcar esta tarea como completada">
-                                    Encargado: <span class="font-medium">{{ rutina.colaborador_encargado.first_name|default:"Equipo General" }}</span>
-                                </p>
-                            </div>
-                            <form action="{% url 'pacientes:completar_rutina' paciente.id rutina.id %}" method="POST">
-                                {% csrf_token %}
-                                <button type="submit" class="w-8 h-8 rounded-full border flex items-center justify-center text-gray-400 hover:text-white hover:bg-green-500 hover:border-green-500 transition-colors" title="Marcar como realizada (por {{ request.user.first_name }})">
-                                    <i class="bi bi-check-lg"></i>
-                                </button>
-                            </form>
-                        </div>
-                        {% empty %}
-                        <p class="text-xs text-gray-500 italic">No hay tareas pendientes para hoy.</p>
-                        {% endfor %}
-                    </div>
-                    
-                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Completadas Hoy ({{ rutinas_completadas.count }})</h4>
-                    <div class="space-y-3">
-                        {% for reg in rutinas_completadas %}
-                        <div class="flex items-center gap-3 p-3 rounded-lg bg-gray-50/50 dark:bg-gray-800/30">
-                            <div class="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 flex items-center justify-center shrink-0">
-                                <i class="bi bi-check-all"></i>
-                            </div>
-                            <div>
-                                <p class="font-semibold text-sm line-through text-gray-500">{{ reg.receta.titulo }}</p>
-                                <p class="text-[10px] text-gray-400 uppercase font-medium">Hecho por {{ reg.completada_por.first_name }} a las {{ reg.fecha_completada|time:"H:i" }}</p>
-                            </div>
-                        </div>
-                        {% empty %}
-                        <p class="text-xs text-gray-500 italic">No se han registrado tareas completadas aún.</p>
-                        {% endfor %}
-                    </div>
-                </div>
-                <div class="p-4 border-t bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border)">
-                    <button onclick="document.getElementById('modal-crear-rutina').classList.remove('hidden')" class="w-full py-2 rounded-lg border border-dashed text-sm font-medium hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2" style="color: var(--color-text); border-color: var(--color-border)">
-                        <i class="bi bi-plus-circle"></i> Nueva Tarea/Receta Diaria
-                    </button>
-                </div>
-            </div>
+
             
             <!-- Personal Asignado -->
             <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-sm" style="border-color: var(--color-border);">
