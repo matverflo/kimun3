@@ -47,10 +47,22 @@ class Command(BaseCommand):
                 
                 # Actualizar fecha de asignación ya que tiene auto_now_add
                 InscripcionCurso.objects.filter(id=insc.id).update(fecha_asignacion=fecha_asig)
-                
+                # Si completado o en progreso, simular fechas de inicio real y fin
                 if estado in ['en_progreso', 'completado']:
                     fecha_inicio = fecha_asig + datetime.timedelta(days=random.randint(1, 5))
                     InscripcionCurso.objects.filter(id=insc.id).update(fecha_inicio_real=fecha_inicio)
+                    
+                    # Agregar tiempo de sesión (Art. 33)
+                    from reportes.models import RegistroSesionArt33
+                    minutos_a_simular = random.randint(120, 600) if estado == 'completado' else random.randint(10, 100)
+                    fecha_salida = fecha_inicio + datetime.timedelta(minutes=minutos_a_simular)
+                    RegistroSesionArt33.objects.create(
+                        usuario=cuidador,
+                        fecha_entrada=fecha_inicio,
+                        fecha_salida=fecha_salida,
+                        modulo_visitado=curso.titulo,
+                        direccion_ip="127.0.0.1"
+                    )
                 
                 if estado == 'completado':
                     from certificados.models import Certificado

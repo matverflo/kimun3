@@ -7,3 +7,4 @@ python manage.py seed_pacientes
 python manage.py seed_cursos
 python manage.py seed_inscripciones
 python fix_certificates.py
+python fix_tiempo.py
