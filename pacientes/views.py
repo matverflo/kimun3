@@ -695,4 +695,7 @@ def eliminar_reporte_ia(request, paciente_id, reporte_id):
         reporte.delete()
         messages.success(request, 'El análisis de IA ha sido eliminado del historial.')
         
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return redirect(referer)
     return redirect('pacientes:sugerencia_ia', paciente_id=paciente_id)

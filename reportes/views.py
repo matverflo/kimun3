@@ -881,3 +881,33 @@ def asignar_curso_ia(request):
             return JsonResponse({'status': 'success', 'message': msg})
                 
     return JsonResponse({'status': 'error', 'message': 'Datos inválidos'})
+
+@login_required
+def eliminar_upskilling(request, reporte_id):
+    from django.shortcuts import get_object_or_404, redirect
+    from django.contrib import messages
+    from .models import ReporteUpskilling
+    
+    reporte = get_object_or_404(ReporteUpskilling, id=reporte_id)
+    if request.method == 'POST':
+        reporte.delete()
+        messages.success(request, 'El análisis de brechas ha sido eliminado del historial.')
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return redirect(referer)
+    return redirect('reportes:dashboard_ia')
+
+@login_required
+def eliminar_nuevos_cursos(request, reporte_id):
+    from django.shortcuts import get_object_or_404, redirect
+    from django.contrib import messages
+    from .models import ReporteNuevosCursos
+    
+    reporte = get_object_or_404(ReporteNuevosCursos, id=reporte_id)
+    if request.method == 'POST':
+        reporte.delete()
+        messages.success(request, 'El análisis de nuevos cursos ha sido eliminado del historial.')
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return redirect(referer)
+    return redirect('reportes:dashboard_ia')

@@ -12,5 +12,7 @@ urlpatterns = [
     path('exportar-zip/', views.descargar_zip_certificados, name='exportar_zip'),
     path('exportar-art33/', views.descargar_pdf_art33, name='exportar_art33'),
     path('ia/asignar/', views.asignar_curso_ia, name='asignar_curso_ia'),
+    path('ia/eliminar-upskilling/<int:reporte_id>/', views.eliminar_upskilling, name='eliminar_upskilling'),
+    path('ia/eliminar-nuevos-cursos/<int:reporte_id>/', views.eliminar_nuevos_cursos, name='eliminar_nuevos_cursos'),
     path('api/registrar-tiempo/', views.registrar_tiempo_sesion, name='registrar_tiempo'),
 ]
