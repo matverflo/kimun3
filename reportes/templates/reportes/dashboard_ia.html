@@ -565,8 +565,10 @@
         text.innerText = 'Guardando...';
 
         const formData = new FormData(form);
+        formData.append('curso_id', curso_id);
+        formData.append('colaborador_id', colaborador_id);
 
-        fetch(form.action, {
+        fetch("{% url 'reportes:asignar_curso_ia' %}", {
             method: 'POST',
             body: formData,
             headers: {
