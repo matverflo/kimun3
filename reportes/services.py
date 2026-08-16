@@ -108,7 +108,7 @@ def obtener_analisis_institucional(tipo_analisis):
         
         INSTRUCCIONES CLAVES:
         Tu justificación debe ser extremadamente específica, empírica y basada en los datos provistos.
-        Debes seguir esta estructura de pensamiento para justificar: "Actualmente no contamos con ningún curso sobre [Tema]. Tenemos [N] residentes que sufren de [Patología/Condición], por lo que este curso ayudaría específicamente a [Acción clínica o beneficio concreto]."
+        Debes seguir esta estructura de pensamiento para justificar: "Actualmente no contamos con ningún curso sobre [Tema]. Tenemos [N] pacientes que sufren de [Patología/Condición], por lo que este curso ayudaría específicamente a [Acción clínica o beneficio concreto]."
         No des respuestas genéricas. Cruza la falta de cursos con las necesidades médicas de la población.
         
         Devuelve EXACTAMENTE un objeto JSON válido con este esquema, sin texto extra:
@@ -118,7 +118,7 @@ def obtener_analisis_institucional(tipo_analisis):
             {
               "titulo_sugerido": "Nombre de un curso nuevo altamente específico",
               "habilidad_faltante": "Técnica, protocolo o habilidad clínica exacta que falta en el catálogo",
-              "justificacion": "Justificación basada en datos (ej: 'No hay curso sobre manejo de gastrostomía. 12 residentes requieren alimentación enteral, y esto ayudaría a reducir IAAS...')"
+              "justificacion": "Justificación basada en datos (ej: 'No hay curso sobre manejo de gastrostomía. 12 pacientes requieren alimentación enteral, y esto ayudaría a reducir IAAS...')"
             }
           ]
         }

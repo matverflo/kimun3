@@ -58,10 +58,10 @@ def crear_paciente(request):
                 patologias=patologias,
                 requerimientos_especiales=requerimientos
             )
-            messages.success(request, f'Residente {nombre_completo} creado correctamente.')
+            messages.success(request, f'Paciente {nombre_completo} creado correctamente.')
             return redirect('pacientes:dashboard_erp')
         except Exception as e:
-            messages.error(request, f'Error al crear residente: {str(e)}')
+            messages.error(request, f'Error al crear paciente: {str(e)}')
             
     return render(request, 'pacientes/crear_paciente.html')
 
