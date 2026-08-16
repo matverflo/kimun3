@@ -11,16 +11,50 @@
             <i class="bi bi-arrow-left"></i> Volver
         </a>
         
-        {% if fecha_generacion %}
-        <div class="flex items-center gap-3">
-            <span class="text-xs text-gray-400">
+        <div class="flex items-center gap-2">
+            {% if fecha_generacion %}
+            
+            {% if reportes_historial and reportes_historial.count > 1 %}
+            <!-- Historial Dropdown -->
+            <div class="relative group">
+                <button class="text-xs font-semibold px-3 py-1.5 rounded border border-gray-200 bg-white hover:bg-gray-50 flex items-center gap-1.5 transition-colors text-gray-600">
+                    <i class="bi bi-clock-history"></i> Historial
+                    <i class="bi bi-chevron-down text-[10px]"></i>
+                </button>
+                <div class="absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
+                    <ul class="text-sm text-gray-700 max-h-64 overflow-y-auto">
+                        {% for rep in reportes_historial %}
+                        <li>
+                            <a href="?reporte_id={{ rep.id }}" class="block px-4 py-2.5 hover:bg-blue-50 transition-colors {% if reporte_actual_id == rep.id %}bg-blue-50/50 font-bold text-blue-700{% endif %}">
+                                Análisis del {{ rep.fecha_generacion|date:"d/m/Y" }} a las {{ rep.fecha_generacion|date:"H:i" }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% else %}
+            <span class="text-xs text-gray-400 mr-1">
                 <i class="bi bi-clock-history"></i> Análisis guardado: {{ fecha_generacion|date:"d/m/Y H:i" }}
             </span>
+            {% endif %}
+
+            {% if reporte_actual_id %}
+            <!-- Basurero para Eliminar Análisis -->
+            <form action="{% url 'pacientes:eliminar_reporte_ia' paciente.id reporte_actual_id %}" method="POST" class="inline" onsubmit="return confirm('¿Seguro que deseas eliminar este análisis del historial?');">
+                {% csrf_token %}
+                <button type="submit" class="text-xs font-bold w-[30px] h-[30px] rounded bg-red-50 hover:bg-red-100 text-red-500 transition-colors inline-flex items-center justify-center border border-red-100" title="Eliminar análisis">
+                    <i class="bi bi-trash3"></i>
+                </button>
+            </form>
+            {% endif %}
+            
+            {% endif %}
+            
             <a href="?regenerar=true" class="text-xs font-bold px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors inline-flex items-center gap-1" onclick="showAnalyzingModal(event)">
                 <i class="bi bi-arrow-clockwise"></i> Volver a Analizar
             </a>
         </div>
-        {% endif %}
     </div>
 
     <!-- Contenido Principal -->

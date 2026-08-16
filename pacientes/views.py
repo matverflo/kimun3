@@ -80,8 +80,8 @@ def desactivar_paciente(request, paciente_id):
         messages.success(request, f'Paciente "{paciente.nombre_completo}" dado de baja exitosamente.')
         return redirect('pacientes:dashboard_erp')
         
-    # Podemos reusar un template de confirmación genérico o usar el de usuarios si se adapta.
-    # Pero lo mejor es crear uno específico para pacientes, aunque si es un modal/sweetalert no hace falta.
+    # Podemos reusar un template de confirmaciÃ³n genÃ©rico o usar el de usuarios si se adapta.
+    # Pero lo mejor es crear uno especÃ­fico para pacientes, aunque si es un modal/sweetalert no hace falta.
     # Dado que usuario_delete renderiza `usuario_confirm_delete.html`, usaremos `paciente_confirm_delete.html`
     return render(request, 'pacientes/paciente_confirm_delete.html', {'paciente': paciente})
 
@@ -107,7 +107,7 @@ def expediente_colaborador(request, user_id):
         )
     ).order_by('orden_estado', '-fecha_asignacion')
     
-    # Obtener límite de pacientes real
+    # Obtener lÃ­mite de pacientes real
     if colaborador.limite_pacientes_personalizado is not None:
         limite_actual = colaborador.limite_pacientes_personalizado
     elif colaborador.cargo:
@@ -117,13 +117,13 @@ def expediente_colaborador(request, user_id):
     pacientes_actuales = colaborador.pacientes_asignados.all()
     pacientes_disponibles = Paciente.objects.exclude(colaboradores=colaborador).order_by('nombre_completo')
     
-    # Procesamiento para gráfico de horas en los últimos 6 meses
+    # Procesamiento para grÃ¡fico de horas en los Ãºltimos 6 meses
     now = timezone.now()
     six_months_ago = now - timedelta(days=180)
     completed = inscripciones.filter(estado='completado', fecha_termino__gte=six_months_ago)
     
     chart_data = {}
-    # Inicializar los últimos 6 meses
+    # Inicializar los Ãºltimos 6 meses
     for i in range(5, -1, -1):
         month_date = now - timedelta(days=30*i)
         month_key = month_date.strftime('%Y-%m') # Usar YYYY-MM para ordenamiento correcto
@@ -135,17 +135,17 @@ def expediente_colaborador(request, user_id):
             if month_key in chart_data:
                 chart_data[month_key] += insc.curso.duracion_horas
                 
-    # Métricas de estado de cursos
+    # MÃ©tricas de estado de cursos
     cursos_completados = inscripciones.filter(estado='completado').count()
     cursos_en_curso = inscripciones.filter(estado='en_progreso').count()
     cursos_pendientes = inscripciones.filter(estado='asignado').count()
     
-    # Horas completadas en los últimos 30 días (Mes) y últimos 7 días (Semana)
+    # Horas completadas en los Ãºltimos 30 dÃ­as (Mes) y Ãºltimos 7 dÃ­as (Semana)
     now = timezone.now()
     start_of_month = now - timedelta(days=30)
     start_of_week = now - timedelta(days=7)
     
-    # Horas de dedicación (Cursos completados y en progreso asignados recientemente)
+    # Horas de dedicaciÃ³n (Cursos completados y en progreso asignados recientemente)
     horas_mes = sum(
         insc.curso.duracion_horas for insc in inscripciones.filter(
             estado__in=['completado', 'en_progreso'], 
@@ -160,7 +160,7 @@ def expediente_colaborador(request, user_id):
         ) if insc.curso.duracion_horas
     )
     
-    # Gráfico por curso de los últimos 30 días y 7 días (Dedicación total)
+    # GrÃ¡fico por curso de los Ãºltimos 30 dÃ­as y 7 dÃ­as (DedicaciÃ³n total)
     last_30_days = now - timedelta(days=30)
     last_7_days = now - timedelta(days=7)
     
@@ -181,7 +181,7 @@ def expediente_colaborador(request, user_id):
     
     for insc in cursos_30:
         if insc.curso.duracion_horas:
-            # Dividir en líneas si es mayor a 25 caracteres para Chart.js
+            # Dividir en lÃ­neas si es mayor a 25 caracteres para Chart.js
             titulo_multilinea = textwrap.wrap(insc.curso.titulo, width=25)
             chart_labels_30.append(titulo_multilinea)
             chart_values_30.append(insc.curso.duracion_horas)
@@ -263,7 +263,7 @@ def descargar_certificado(request, inscripcion_id):
         
     inscripcion = get_object_or_404(InscripcionCurso, id=inscripcion_id, estado='completado')
     
-    # Intentar poner español para la fecha
+    # Intentar poner espaÃ±ol para la fecha
     try:
         locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
     except:
@@ -287,17 +287,17 @@ def descargar_certificado(request, inscripcion_id):
     p.setLineWidth(1)
     p.rect(36, 36, width - 72, height - 72)
     
-    # Logo o Institución
+    # Logo o InstituciÃ³n
     p.setFont("Helvetica-Bold", 16)
     p.setFillColorRGB(0.5, 0.5, 0.5)
-    p.drawCentredString(width/2, height - 80, "RESIDENCIA ELEAM HUALPÉN - PLATAFORMA KIMÜN")
+    p.drawCentredString(width/2, height - 80, "RESIDENCIA ELEAM HUALPÃN - PLATAFORMA KIMÃN")
     
-    # Título
+    # TÃ­tulo
     p.setFillColorRGB(0.1, 0.1, 0.1)
     p.setFont("Helvetica-Bold", 36)
-    p.drawCentredString(width/2, height - 160, "CERTIFICADO DE APROBACIÓN")
+    p.drawCentredString(width/2, height - 160, "CERTIFICADO DE APROBACIÃN")
     
-    # Subtítulo
+    # SubtÃ­tulo
     p.setFont("Helvetica", 16)
     p.drawCentredString(width/2, height - 210, "Se certifica que:")
     
@@ -316,8 +316,8 @@ def descargar_certificado(request, inscripcion_id):
     # Horas y Nota (simulada)
     p.setFont("Helvetica", 14)
     fecha_term = inscripcion.fecha_termino.strftime('%d de %B, %Y') if inscripcion.fecha_termino else ""
-    p.drawCentredString(width/2, height - 420, f"Duración: {inscripcion.curso.duracion_horas} horas académicas | Fecha de término: {fecha_term}")
-    p.drawCentredString(width/2, height - 445, "Puntuación obtenida: 100% (Aprobado con Distinción)")
+    p.drawCentredString(width/2, height - 420, f"DuraciÃ³n: {inscripcion.curso.duracion_horas} horas acadÃ©micas | Fecha de tÃ©rmino: {fecha_term}")
+    p.drawCentredString(width/2, height - 445, "PuntuaciÃ³n obtenida: 100% (Aprobado con DistinciÃ³n)")
     
     # Firmas
     p.setStrokeColorRGB(0.4, 0.4, 0.4)
@@ -325,10 +325,10 @@ def descargar_certificado(request, inscripcion_id):
     
     p.line(180, 100, 380, 100)
     p.setFont("Helvetica-Bold", 12)
-    p.drawCentredString(280, 85, "Dirección Académica")
+    p.drawCentredString(280, 85, "DirecciÃ³n AcadÃ©mica")
     
     p.line(width - 380, 100, width - 180, 100)
-    p.drawCentredString(width - 280, 85, "Dirección General ELEAM")
+    p.drawCentredString(width - 280, 85, "DirecciÃ³n General ELEAM")
     
     p.showPage()
     p.save()
@@ -348,7 +348,7 @@ def asignar_paciente(request, user_id):
     
     if paciente_id:
         paciente = get_object_or_404(Paciente, id=paciente_id)
-        # Asignar paciente (relación M2M)
+        # Asignar paciente (relaciÃ³n M2M)
         paciente.colaboradores.add(colaborador)
         messages.success(request, f'Paciente {paciente.nombre_completo} asignado correctamente a {colaborador.first_name}.')
         
@@ -412,7 +412,7 @@ def expediente_paciente(request, paciente_id):
     colaboradores_actuales = paciente.colaboradores.all()
     colaboradores_disponibles = Usuario.objects.filter(rol='colaborador').exclude(id__in=colaboradores_actuales.values_list('id', flat=True)).order_by('first_name')
     
-    # Lógica de Rutinas de Hoy
+    # LÃ³gica de Rutinas de Hoy
     hoy = timezone.now().date()
     registros_hoy = RegistroRutinaDiaria.objects.filter(receta__paciente=paciente, fecha_completada__date=hoy)
     recetas_completadas_ids = registros_hoy.values_list('receta_id', flat=True)
@@ -451,7 +451,7 @@ def agregar_hito_clinico(request, paciente_id):
             descripcion=descripcion,
             importancia=importancia
         )
-        messages.success(request, 'Hito clínico agregado correctamente al registro del paciente.')
+        messages.success(request, 'Hito clÃ­nico agregado correctamente al registro del paciente.')
         
     return redirect('pacientes:expediente_paciente', paciente_id=paciente_id)
 
@@ -521,7 +521,7 @@ def crear_receta_diaria(request, paciente_id):
                 titulo=titulo,
                 detalles=detalles
             )
-            messages.success(request, 'Receta / Tarea añadida exitosamente al plan diario.')
+            messages.success(request, 'Receta / Tarea aÃ±adida exitosamente al plan diario.')
             
     return redirect('pacientes:expediente_paciente', paciente_id=paciente_id)
 
@@ -542,7 +542,7 @@ def completar_rutina(request, paciente_id, receta_id):
             receta=receta,
             completada_por=request.user
         )
-        messages.success(request, 'Tarea marcada como completada para el día de hoy.')
+        messages.success(request, 'Tarea marcada como completada para el dÃ­a de hoy.')
         
     return redirect('pacientes:expediente_paciente', paciente_id=paciente_id)
 
@@ -564,7 +564,7 @@ def descargar_historial_rutinas(request, paciente_id):
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
     
-    # Estilos Básicos
+    # Estilos BÃ¡sicos
     p.setFont("Helvetica-Bold", 16)
     p.drawString(1 * inch, 10 * inch, f"Historial de Tareas y Cuidados")
     
@@ -616,7 +616,7 @@ def sugerencia_ia(request, paciente_id):
     
     paciente = get_object_or_404(Paciente, id=paciente_id)
     
-    # Si la petición es un POST, el usuario quiere asignar al colaborador
+    # Si la peticiÃ³n es un POST, el usuario quiere asignar al colaborador
     if request.method == 'POST':
         from usuarios.models import Usuario
         from django.contrib import messages
@@ -627,10 +627,10 @@ def sugerencia_ia(request, paciente_id):
             colaborador = get_object_or_404(Usuario, id=colab_id)
             if colaborador not in paciente.colaboradores.all():
                 paciente.colaboradores.add(colaborador)
-                messages.success(request, f'¡{colaborador.get_full_name()} asignado exitosamente al paciente vía IA!')
+                messages.success(request, f'Â¡{colaborador.get_full_name()} asignado exitosamente al paciente vÃ­a IA!')
         return redirect('pacientes:expediente_paciente', paciente_id=paciente_id)
     
-    # Es un GET, llamamos a la IA o usamos el caché
+    # Es un GET, llamamos a la IA o usamos el cachÃ©
     from .models import ReporteAsignacionIA
     
     regenerar = request.GET.get('regenerar') == 'true'
@@ -655,7 +655,7 @@ def sugerencia_ia(request, paciente_id):
                     buenas_recomendaciones = []
                     for rec in resultado_ia['recomendaciones']:
                         m_rate = int(rec.get('match_rate', 0))
-                        # Dejamos pasar si ya está asignado o si tiene buena compatibilidad
+                        # Dejamos pasar si ya estÃ¡ asignado o si tiene buena compatibilidad
                         if rec.get('id_colaborador') in asignados_ids or m_rate >= 60:
                             buenas_recomendaciones.append(rec)
                     
@@ -681,3 +681,18 @@ def sugerencia_ia(request, paciente_id):
     }
     return render(request, 'pacientes/sugerencia_ia.html', context)
 
+
+@login_required
+def eliminar_reporte_ia(request, paciente_id, reporte_id):
+    from django.shortcuts import get_object_or_404, redirect
+    from django.contrib import messages
+    from .models import Paciente, ReporteAsignacionIA
+    
+    paciente = get_object_or_404(Paciente, id=paciente_id)
+    reporte = get_object_or_404(ReporteAsignacionIA, id=reporte_id, paciente=paciente)
+    
+    if request.method == 'POST':
+        reporte.delete()
+        messages.success(request, 'El análisis de IA ha sido eliminado del historial.')
+        
+    return redirect('pacientes:sugerencia_ia', paciente_id=paciente_id)

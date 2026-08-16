@@ -27,4 +27,5 @@ urlpatterns = [
     
     # Asignación IA
     path('expediente/paciente/<int:paciente_id>/sugerencia-ia/', views.sugerencia_ia, name='sugerencia_ia'),
+    path('expediente/paciente/<int:paciente_id>/sugerencia-ia/eliminar/<int:reporte_id>/', views.eliminar_reporte_ia, name='eliminar_reporte_ia'),
 ]
