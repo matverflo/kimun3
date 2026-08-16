@@ -153,7 +153,7 @@
                                 <p class="text-xs text-gray-500 mt-0.5">{{ colab.cargo.nombre|default:"Colaborador" }}</p>
                             </div>
                         </div>
-                        <form action="{% url 'pacientes:desvincular_colaborador_de_paciente' paciente.id colab.id %}" method="POST" onsubmit="return confirm('¿Seguro que deseas desvincular a este colaborador del paciente?');">
+                        <form action="{% url 'pacientes:desvincular_colaborador_de_paciente' paciente.id colab.id %}" method="POST" onsubmit="return confirm('¿Seguro que deseas desvincular a este colaborador del residente?');">
                             {% csrf_token %}
                             <button type="submit" class="text-red-500 opacity-50 hover:opacity-100 transition-opacity p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg" title="Desasignar">
                                 <i class="bi bi-person-dash text-lg"></i>
@@ -163,7 +163,7 @@
                     {% empty %}
                     <div class="p-8 text-center text-gray-500">
                         <i class="bi bi-emoji-smile text-3xl mb-2 text-gray-300 block"></i>
-                        <p class="text-sm">Este paciente no tiene cuidadores asignados.</p>
+                        <p class="text-sm">Este residente no tiene cuidadores asignados.</p>
                     </div>
                     {% endfor %}
                 </div>
@@ -214,7 +214,7 @@
                         {% empty %}
                         <li class="px-5 py-8 text-center text-sm text-gray-500">
                             <i class="bi bi-check-circle text-2xl mb-2 text-green-500 block"></i>
-                            Todo el personal ya está asignado a este paciente.
+                            Todo el personal ya está asignado a este residente.
                         </li>
                         {% endfor %}
                         

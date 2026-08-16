@@ -47,7 +47,7 @@
         
         <div class="shrink-0 w-full md:w-auto">
             <div class="text-center p-4 rounded-xl border flex flex-col justify-center" style="background-color: var(--color-surface-raised); border-color: var(--color-border);">
-                <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Carga de Pacientes</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Carga de Residentes</p>
                 <div class="flex items-end justify-center gap-2">
                     <span class="text-3xl font-bold" style="color: var(--color-primary)">{{ pacientes_actuales.count }}</span>
                     {% if limite_actual > 0 %}
@@ -224,7 +224,7 @@
             <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-sm" style="border-color: var(--color-border);">
                 <div class="px-6 py-5 border-b flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
                     <h2 class="text-lg font-bold flex items-center gap-2" style="color: var(--color-text)">
-                        <i class="bi bi-people" style="color: var(--color-primary)"></i> Pacientes Asignados
+                        <i class="bi bi-people" style="color: var(--color-primary)"></i> Residentes Asignados
                     </h2>
                 </div>
                 <div class="divide-y" style="border-color: var(--color-border);">
@@ -234,7 +234,7 @@
                             <p class="font-semibold text-sm" style="color: var(--color-text)">{{ paciente.nombre_completo }}</p>
                             <p class="text-xs text-gray-500 mt-0.5">{{ paciente.rut }}</p>
                         </div>
-                        <form action="{% url 'pacientes:desvincular_paciente' colaborador.id paciente.id %}" method="POST" onsubmit="return confirm('¿Seguro que deseas desvincular a este paciente de la carga de este colaborador?');">
+                        <form action="{% url 'pacientes:desvincular_paciente' colaborador.id paciente.id %}" method="POST" onsubmit="return confirm('¿Seguro que deseas desvincular a este residente de la carga de este colaborador?');">
                             {% csrf_token %}
                             <button type="submit" class="text-red-500 opacity-50 hover:opacity-100 transition-opacity p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg" title="Desasignar">
                                 <i class="bi bi-person-dash text-lg"></i>
@@ -244,13 +244,13 @@
                     {% empty %}
                     <div class="p-8 text-center text-gray-500">
                         <i class="bi bi-emoji-smile text-3xl mb-2 text-gray-300"></i>
-                        <p class="text-sm">No tiene pacientes asignados en este momento.</p>
+                        <p class="text-sm">No tiene residentes asignados en este momento.</p>
                     </div>
                     {% endfor %}
                 </div>
                 <div class="p-4 border-t bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border)">
                     <button onclick="document.getElementById('modal-asignar-paciente').classList.remove('hidden')" class="w-full py-2 rounded-lg border border-dashed text-sm font-medium hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2" style="color: var(--color-text); border-color: var(--color-border)">
-                        <i class="bi bi-person-plus"></i> Asignar Paciente
+                        <i class="bi bi-person-plus"></i> Asignar Residente
                     </button>
                 </div>
             </div>
@@ -260,11 +260,11 @@
     </div>
 </div>
 
-<!-- Modal Asignar Paciente -->
+<!-- Modal Asignar Residente -->
 <div id="modal-asignar-paciente" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/50 fade-in" style="backdrop-filter: blur(4px);">
     <div class="bg-white dark:bg-slate-800 rounded-xl border shadow-lg max-w-md w-full mx-4 overflow-hidden" style="border-color: var(--color-border);">
         <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
-            <h3 class="font-bold text-lg" style="color: var(--color-text)">Asignar Paciente</h3>
+            <h3 class="font-bold text-lg" style="color: var(--color-text)">Asignar Residente</h3>
             <button onclick="document.getElementById('modal-asignar-paciente').classList.add('hidden')" class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
                 <i class="bi bi-x-lg"></i>
             </button>
@@ -272,7 +272,7 @@
         <form action="{% url 'pacientes:asignar_paciente' colaborador.id %}" method="POST">
             {% csrf_token %}
             <div class="p-6">
-                <p class="block text-sm font-medium mb-3" style="color: var(--color-text)">Buscar paciente por Nombre o RUT:</p>
+                <p class="block text-sm font-medium mb-3" style="color: var(--color-text)">Buscar residente por Nombre o RUT:</p>
                 
                 <!-- Input de búsqueda con Icono -->
                 <div class="relative mb-4">
@@ -296,14 +296,14 @@
                         {% empty %}
                         <li class="px-5 py-8 text-center text-sm text-gray-500">
                             <i class="bi bi-check-circle text-2xl mb-2 text-green-500 block"></i>
-                            Todos los pacientes ya están asignados a este colaborador.
+                            Todos los residentes ya están asignados a este colaborador.
                         </li>
                         {% endfor %}
                         
                         <!-- Mensaje sin resultados (Oculto por defecto) -->
                         <li id="noResultsMsg" class="px-5 py-8 text-center text-sm text-gray-500 hidden">
                             <i class="bi bi-search text-2xl mb-2 text-gray-400 block"></i>
-                            No se encontraron pacientes con esa búsqueda.
+                            No se encontraron residentes con esa búsqueda.
                         </li>
                     </ul>
                 </div>

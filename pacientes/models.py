@@ -27,8 +27,8 @@ class Paciente(models.Model):
     activo = models.BooleanField(default=True, verbose_name='Paciente Activo')
     
     class Meta:
-        verbose_name = 'Paciente'
-        verbose_name_plural = 'Pacientes'
+        verbose_name = 'Residente'
+        verbose_name_plural = 'Residentes'
 
     def __str__(self):
         return f"{self.nombre_completo} - {self.get_nivel_dependencia_display()}"

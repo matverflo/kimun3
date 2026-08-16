@@ -31,17 +31,17 @@
     {% if not tipo_seleccionado %}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
         
-        <!-- Opción 0: Asignación de Paciente -->
+        <!-- Opción 0: Asignación de Residente -->
         <div class="bg-white dark:bg-slate-800 border rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all flex flex-col items-center text-center group cursor-pointer" style="border-color: var(--color-border);" data-url="?tipo=pacientes">
             <div class="w-20 h-20 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 flex items-center justify-center text-4xl mb-6 group-hover:scale-110 transition-transform">
                 <i class="bi bi-person-heart"></i>
             </div>
             <h2 class="text-xl font-bold mb-2 text-gray-900 dark:text-white">Emparejamiento de Cuidadores</h2>
             <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 flex-1">
-                Encuentra al cuidador ideal para cada paciente analizando su perfil clínico y las competencias del personal disponible.
+                Encuentra al cuidador ideal para cada residente analizando su perfil clínico y las competencias del personal disponible.
             </p>
             <button class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm w-full transition-colors flex items-center justify-center gap-2">
-                Ver Lista de Pacientes <i class="bi bi-list-check"></i>
+                Ver Lista de Residentes <i class="bi bi-list-check"></i>
             </button>
         </div>
         
@@ -52,7 +52,7 @@
             </div>
             <h2 class="text-xl font-bold mb-2 text-gray-900 dark:text-white">Recomendación de Cursos Existentes</h2>
             <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 flex-1">
-                Identifica qué capacitaciones de tu <strong>catálogo actual</strong> serían más urgentes para tu personal según las enfermedades de los pacientes activos.
+                Identifica qué capacitaciones de tu <strong>catálogo actual</strong> serían más urgentes para tu personal según las enfermedades de los residentes activos.
             </p>
             <button class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm w-full transition-colors flex items-center justify-center gap-2">
                 Ejecutar Análisis <i class="bi bi-magic"></i>
@@ -108,7 +108,7 @@
                     <thead class="bg-gray-50 dark:bg-slate-800/50 border-b" style="border-color: var(--color-border);">
                         <tr class="text-xs uppercase tracking-wider text-gray-500 font-semibold">
                             <th class="px-6 py-4">Fecha</th>
-                            <th class="px-6 py-4">Paciente</th>
+                            <th class="px-6 py-4">Residente</th>
                             <th class="px-6 py-4 text-center">Acción</th>
                         </tr>
                     </thead>
@@ -391,11 +391,11 @@
             
             {% if tipo_seleccionado == 'pacientes' %}
             
-            <!-- PANEL C: LISTA DE PACIENTES -->
+            <!-- PANEL C: LISTA DE RESIDENTES -->
             <div class="space-y-4" x-data="{ searchPaciente: '', filterDependencia: '' }">
                 <div class="flex items-center gap-2 mb-2">
                     <i class="bi bi-person-heart text-emerald-500 text-xl"></i>
-                    <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">Selecciona un paciente para asignar cuidador compatible con IA</h3>
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">Selecciona un residente para asignar cuidador compatible con IA</h3>
                 </div>
                 
                 <!-- Filtros (Alpine) -->
@@ -421,7 +421,7 @@
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b font-semibold bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
-                                <th scope="col" class="px-6 py-4">Paciente / RUT</th>
+                                <th scope="col" class="px-6 py-4">Residente / RUT</th>
                                 <th scope="col" class="px-6 py-4">Dependencia</th>
                                 <th scope="col" class="px-6 py-4">Patologías</th>
                                 <th scope="col" class="px-6 py-4 text-right">Acciones</th>
@@ -482,7 +482,7 @@
                             {% empty %}
                             <tr>
                                 <td colspan="4" class="p-6 text-center text-gray-500 border-t border-dashed" style="border-color: var(--color-border);">
-                                    No hay pacientes registrados en el sistema.
+                                    No hay residentes registrados en el sistema.
                                 </td>
                             </tr>
                             {% endfor %}
@@ -524,7 +524,7 @@
     const loadingMsg = document.getElementById('ia-loading-msg');
 
     const messages = [
-        "Analizando patologías de los pacientes...",
+        "Analizando patologías de los residentes...",
         "Revisando el catálogo de cursos disponibles...",
         "Evaluando capacitaciones del personal...",
         "Generando recomendaciones con IA...",
@@ -579,7 +579,7 @@
             });
         });
 
-        // Botones "Asignar" en lista de pacientes
+        // Botones "Asignar" en lista de residentes
         document.querySelectorAll('a[href*="sugerencia-ia"]').forEach(btn => {
             btn.addEventListener('click', function(e) {
                 const href = this.href;
@@ -589,7 +589,7 @@
                 }
                 
                 e.preventDefault();
-                showLoadingModal("Analizando el perfil del paciente y buscando el mejor cuidador...");
+                showLoadingModal("Analizando el perfil del residente y buscando el mejor cuidador...");
                 setTimeout(() => { window.location.href = href; }, 150);
             });
         });
