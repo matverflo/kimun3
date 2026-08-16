@@ -104,9 +104,9 @@
         <!-- Tab: Asignacion -->
         <div x-show="activeTab === 'asignacion'" style="display: none;">
             <div class="bg-white dark:bg-slate-800 border rounded-xl overflow-hidden shadow-sm" style="border-color: var(--color-border);">
-                <table class="w-full text-left">
-                    <thead class="bg-gray-50 dark:bg-slate-800/50 border-b" style="border-color: var(--color-border);">
-                        <tr class="text-xs uppercase tracking-wider text-gray-500 font-semibold">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b font-semibold bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
                             <th class="px-6 py-4">Fecha</th>
                             <th class="px-6 py-4">Residente</th>
                             <th class="px-6 py-4 text-center">Acción</th>
@@ -114,9 +114,13 @@
                     </thead>
                     <tbody class="divide-y" style="border-color: var(--color-border);">
                         {% for rep in historial_asignacion %}
-                        <tr class="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-sm text-gray-700 dark:text-gray-300">{{ rep.fecha_generacion|date:"d M Y, H:i" }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{{ rep.paciente.nombre_completo }}</td>
+                        <tr class="border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors" style="border-color: var(--color-border);">
+                            <td class="px-6 py-4">
+                                <span class="text-sm font-medium" style="color: var(--color-text-secondary)">{{ rep.fecha_generacion|date:"d M Y, H:i" }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="text-sm font-medium" style="color: var(--color-text-secondary)">{{ rep.paciente.nombre_completo }}</span>
+                            </td>
                             <td class="px-6 py-4 text-center">
                                 <div class="flex items-center justify-center gap-2">
                                     <a href="{% url 'pacientes:sugerencia_ia' rep.paciente.id %}?reporte_id={{ rep.id }}" class="px-3 py-1.5 rounded text-gray-500 hover:bg-blue-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 text-sm font-medium inline-flex items-center gap-2 transition-colors">
@@ -142,17 +146,19 @@
         <!-- Tab: Upskilling -->
         <div x-show="activeTab === 'upskilling'" style="display: none;">
             <div class="bg-white dark:bg-slate-800 border rounded-xl overflow-hidden shadow-sm" style="border-color: var(--color-border);">
-                <table class="w-full text-left">
-                    <thead class="bg-gray-50 dark:bg-slate-800/50 border-b" style="border-color: var(--color-border);">
-                        <tr class="text-xs uppercase tracking-wider text-gray-500 font-semibold">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b font-semibold bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
                             <th class="px-6 py-4">Fecha de Análisis</th>
                             <th class="px-6 py-4 text-center">Acción</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y" style="border-color: var(--color-border);">
                         {% for rep in historial_upskilling %}
-                        <tr class="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-sm text-gray-700 dark:text-gray-300">{{ rep.fecha_generacion|date:"d M Y, H:i" }}</td>
+                        <tr class="border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors" style="border-color: var(--color-border);">
+                            <td class="px-6 py-4">
+                                <span class="text-sm font-medium" style="color: var(--color-text-secondary)">{{ rep.fecha_generacion|date:"d M Y, H:i" }}</span>
+                            </td>
                             <td class="px-6 py-4 text-center">
                                 <div class="flex items-center justify-center gap-2">
                                     <a href="?tipo=upskilling&reporte_id={{ rep.id }}" class="px-3 py-1.5 rounded text-gray-500 hover:bg-blue-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 text-sm font-medium inline-flex items-center gap-2 transition-colors">
@@ -178,17 +184,19 @@
         <!-- Tab: Nuevos Cursos -->
         <div x-show="activeTab === 'nuevos'" style="display: none;">
             <div class="bg-white dark:bg-slate-800 border rounded-xl overflow-hidden shadow-sm" style="border-color: var(--color-border);">
-                <table class="w-full text-left">
-                    <thead class="bg-gray-50 dark:bg-slate-800/50 border-b" style="border-color: var(--color-border);">
-                        <tr class="text-xs uppercase tracking-wider text-gray-500 font-semibold">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b font-semibold bg-gray-50/50 dark:bg-gray-800/20" style="border-color: var(--color-border);">
                             <th class="px-6 py-4">Fecha de Análisis</th>
                             <th class="px-6 py-4 text-center">Acción</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y" style="border-color: var(--color-border);">
                         {% for rep in historial_nuevos_cursos %}
-                        <tr class="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-sm text-gray-700 dark:text-gray-300">{{ rep.fecha_generacion|date:"d M Y, H:i" }}</td>
+                        <tr class="border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors" style="border-color: var(--color-border);">
+                            <td class="px-6 py-4">
+                                <span class="text-sm font-medium" style="color: var(--color-text-secondary)">{{ rep.fecha_generacion|date:"d M Y, H:i" }}</span>
+                            </td>
                             <td class="px-6 py-4 text-center">
                                 <div class="flex items-center justify-center gap-2">
                                     <a href="?tipo=nuevos_cursos&reporte_id={{ rep.id }}" class="px-3 py-1.5 rounded text-gray-500 hover:bg-blue-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 text-sm font-medium inline-flex items-center gap-2 transition-colors">
@@ -434,13 +442,19 @@
                                 x-data="{ nombre: '{{ p.nombre_completo|lower|escapejs }}', rut: '{{ p.rut|lower|escapejs }}', dependencia: '{{ p.nivel_dependencia|lower }}' }"
                                 x-show="(searchPaciente === '' || nombre.includes(searchPaciente.toLowerCase()) || rut.includes(searchPaciente.toLowerCase())) && (filterDependencia === '' || dependencia === filterDependencia)">
                                 <td class="px-6 py-4">
-                                    <p class="font-bold text-gray-900 dark:text-white">{{ p.nombre_completo }}</p>
-                                    <p class="text-xs text-gray-500 font-mono mt-1">{{ p.rut }}</p>
+                                    <p class="font-semibold" style="color: var(--color-text)">{{ p.nombre_completo }}</p>
+                                    <p class="text-xs text-gray-500 mt-0.5">{{ p.edad }} años | RUT: {{ p.rut }}</p>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="px-2.5 py-1 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-full text-xs font-bold border border-blue-200 dark:border-blue-800">
-                                        {{ p.get_nivel_dependencia_display }}
-                                    </span>
+                                    {% if p.nivel_dependencia == 'leve' %}
+                                        <span class="px-2.5 py-1 text-xs rounded-full font-semibold border" style="background-color: var(--color-success-bg); color: var(--color-success); border-color: rgba(22, 163, 74, 0.2)">Leve</span>
+                                    {% elif p.nivel_dependencia == 'moderada' %}
+                                        <span class="px-2.5 py-1 text-xs rounded-full font-semibold border" style="background-color: var(--color-info-bg); color: var(--color-info); border-color: rgba(37, 99, 235, 0.2)">Moderada</span>
+                                    {% elif p.nivel_dependencia == 'severa' %}
+                                        <span class="px-2.5 py-1 text-xs rounded-full font-semibold border" style="background-color: var(--color-warning-bg); color: var(--color-warning); border-color: rgba(217, 119, 6, 0.2)">Severa</span>
+                                    {% else %}
+                                        <span class="px-2.5 py-1 text-xs rounded-full font-semibold border" style="background-color: var(--color-pink-bg); color: var(--color-pink); border-color: rgba(219, 39, 119, 0.2)">Postrado</span>
+                                    {% endif %}
                                 </td>
                                 <td class="px-6 py-4">
                                     <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-1 max-w-xs" title="{{ p.patologias|default:'Sin patologías registradas.' }}">
