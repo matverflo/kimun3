@@ -3,7 +3,7 @@
 {% block title %}Análisis Institucional - Kimün{% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto space-y-8 pb-10">
+<div class="max-w-7xl mx-auto px-4 md:px-6 py-8 space-y-8">
     
     <!-- Header -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -382,16 +382,28 @@
             {% if tipo_seleccionado == 'pacientes' %}
             
             <!-- PANEL C: LISTA DE PACIENTES -->
-            <div class="space-y-4 max-w-4xl mx-auto">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-2">
-                        <i class="bi bi-person-heart text-emerald-500 text-xl"></i>
-                        <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">Selecciona un paciente para asignar cuidador con IA</h3>
+            <div class="space-y-4" x-data="{ searchPaciente: '', filterDependencia: '' }">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="bi bi-person-heart text-emerald-500 text-xl"></i>
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">Selecciona un paciente para asignar cuidador con IA</h3>
+                </div>
+                
+                <!-- Filtros (Alpine) -->
+                <div class="p-3 border flex flex-col md:flex-row gap-3 bg-gray-50/30 dark:bg-slate-800/30 rounded-xl shadow-sm mb-4" style="border-color: var(--color-border);">
+                    <div class="relative flex-1">
+                        <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                        <input type="text" x-model="searchPaciente" placeholder="Buscar por nombre o RUT..." 
+                               class="w-full pl-9 pr-3 py-1.5 text-sm rounded-lg border outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all bg-white dark:bg-slate-800"
+                               style="border-color: var(--color-border); color: var(--color-text);">
                     </div>
-                    <!-- Buscador -->
-                    <div class="relative w-64">
-                        <i class="bi bi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" id="searchInput" onkeyup="filterPatients()" placeholder="Buscar por Nombre o RUT..." class="w-full pl-10 pr-4 py-2 border rounded-xl text-sm focus:ring-emerald-500 focus:border-emerald-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white" style="border-color: var(--color-border);">
+                    <div class="w-full md:w-56">
+                        <select x-model="filterDependencia" class="w-full px-3 py-1.5 text-sm rounded-lg border outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all bg-white dark:bg-slate-800" style="border-color: var(--color-border); color: var(--color-text);">
+                            <option value="">Todas las Dependencias</option>
+                            <option value="leve">Leve</option>
+                            <option value="moderada">Moderada</option>
+                            <option value="severa">Severa</option>
+                            <option value="postrado">Postrado</option>
+                        </select>
                     </div>
                 </div>
                 
@@ -407,7 +419,10 @@
                         </thead>
                         <tbody id="patientsList">
                             {% for p in pacientes %}
-                            <tr class="patient-card border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors" style="border-color: var(--color-border);" data-search="{{ p.nombre_completo|lower }} {{ p.rut|lower }}">
+                            <tr class="patient-card border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors" 
+                                style="border-color: var(--color-border);" 
+                                x-data="{ nombre: '{{ p.nombre_completo|lower|escapejs }}', rut: '{{ p.rut|lower|escapejs }}', dependencia: '{{ p.nivel_dependencia|lower }}' }"
+                                x-show="(searchPaciente === '' || nombre.includes(searchPaciente.toLowerCase()) || rut.includes(searchPaciente.toLowerCase())) && (filterDependencia === '' || dependencia === filterDependencia)">
                                 <td class="px-6 py-4">
                                     <p class="font-bold text-gray-900 dark:text-white">{{ p.nombre_completo }}</p>
                                     <p class="text-xs text-gray-500 font-mono mt-1">{{ p.rut }}</p>
@@ -570,13 +585,7 @@
         });
     });
 
-    // Filtrado de pacientes
-    function filterPatients() {
-        let input = document.getElementById('searchInput').value.toLowerCase();
-        document.querySelectorAll('.patient-card').forEach(card => {
-            card.style.display = card.getAttribute('data-search').includes(input) ? "" : "none";
-        });
-    }
+    // No more manual filterPatients, using AlpineJS
 
     // Inscripción asíncrona de candidatos
     function inscribirCandidato(event, form, curso_id, colaborador_id) {
