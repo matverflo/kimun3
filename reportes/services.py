@@ -96,7 +96,8 @@ def obtener_analisis_institucional(tipo_analisis):
               "curso_id": "El número de ID del curso (entero)",
               "curso_existente": "Nombre del curso",
               "justificacion": "Justificación clínica detallada (ej: 'Tenemos 35 pacientes con Incontinencia Urinaria, es vital capacitar a sus cuidadores directos').",
-              "patologias_objetivo": ["Incontinencia urinaria", "Demencia"] // Array de strings con las patologías que este curso ataca
+              "patologias_objetivo": ["Incontinencia urinaria", "Demencia"], // Array de strings con las patologías que este curso ataca
+              "roles_ideales": ["TENS", "Enfermera"] // Array de strings con los cargos que pueden tomar este curso. Sé estricto: no recomiendes cursos de enfermería (como sondas) a Kinesiólogos, Nutricionistas, etc.
             }
           ]
         }

@@ -8,8 +8,12 @@ Usuario = get_user_model()
 
 @login_required
 def dashboard_erp(request):
-    pacientes = Paciente.objects.filter(activo=True).order_by('-fecha_ingreso')
-    colaboradores = Usuario.objects.filter(rol='colaborador', is_active=True).annotate(
+    from django.db.models import Prefetch
+    pacientes = Paciente.objects.filter(activo=True).prefetch_related(
+        Prefetch('colaboradores', queryset=Usuario.objects.select_related('cargo'))
+    ).order_by('-fecha_ingreso')
+    
+    colaboradores = Usuario.objects.filter(rol='colaborador', is_active=True).select_related('cargo').annotate(
         cursos_realizados=Count('inscripciones', filter=Q(inscripciones__estado='completado')),
         cursos_en_curso=Count('inscripciones', filter=Q(inscripciones__estado='en_progreso')),
         cursos_pendientes=Count('inscripciones', filter=Q(inscripciones__estado='asignado'))

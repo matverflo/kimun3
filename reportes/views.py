@@ -346,14 +346,13 @@ def dashboard_ia(request):
                             for p in patologias:
                                 q_pats |= Q(pacientes_asignados__patologias__icontains=p.strip())
                             colabs = colabs.filter(q_pats).distinct()
-                        else:
-                            # Fallback si no hay patologías, filtramos por rol por defecto
-                            roles = item.get('roles_ideales', [])
-                            if roles and isinstance(roles, list):
-                                q_roles = Q()
-                                for r in roles:
-                                    q_roles |= Q(cargo__nombre__icontains=r.split('/')[0].strip())
-                                colabs = colabs.filter(q_roles)
+                            
+                        roles = item.get('roles_ideales', [])
+                        if roles and isinstance(roles, list):
+                            q_roles = Q()
+                            for r in roles:
+                                q_roles |= Q(cargo__nombre__icontains=r.split('/')[0].strip())
+                            colabs = colabs.filter(q_roles)
                             
                         sugeridos = list(colabs.annotate(
                             cursos_pendientes=Count('inscripciones', filter=Q(inscripciones__estado__in=['asignado', 'en_progreso']))
@@ -389,7 +388,7 @@ def dashboard_ia(request):
         context['resultado_ia'] = resultado_ia
     elif tipo == 'pacientes':
         from pacientes.models import Paciente
-        context['pacientes'] = Paciente.objects.all()
+        context['pacientes'] = Paciente.objects.all().prefetch_related('reportes_ia')
         
     return render(request, 'reportes/dashboard_ia.html', context)
 
