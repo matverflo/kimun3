@@ -199,7 +199,7 @@
                     
                     <form action="{% url 'pacientes:sugerencia_ia' paciente.id %}" method="POST" class="w-full">
                         {% csrf_token %}
-                        <input type="hidden" name="colaborador_id" value="{{ recomendacion.id_colaborador }}">
+                        <input type="hidden" name="colaborador_id" value="{{ recomendacion.id_colaborador|default:recomendacion.id|default:recomendacion.colaborador_id }}">
                         <button type="submit" class="w-full py-2.5 rounded-lg bg-[#1a365d] hover:bg-[#122746] text-white font-bold text-sm transition-colors shadow-sm flex items-center justify-center gap-2">
                             Asignar Paciente <i class="bi bi-arrow-right"></i>
                         </button>
@@ -234,7 +234,7 @@
 </div>
 
 <script>
-    document.querySelectorAll('form[action*="sugerencia_ia"]').forEach(form => {
+    document.querySelectorAll('form[action*="sugerencia-ia"]').forEach(form => {
         form.addEventListener('submit', function() {
             const modal = document.getElementById('assign-modal');
             document.getElementById('modal-title').textContent = 'Asignando Cuidador';
