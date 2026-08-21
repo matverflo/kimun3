@@ -11,16 +11,6 @@ from .forms import CursoForm, MaterialForm, CategoriaForm, ClaseForm, ModuloForm
 from usuarios.decorators import admin_required, docente_or_admin_required, course_owner_or_admin
 
 
-def generar_demo_profesor(request):
-    from django.http import HttpResponse
-    from django.core.management import call_command
-    try:
-        call_command('seed_demo_profesor')
-        return HttpResponse("¡Datos de prueba generados exitosamente! Ya puedes iniciar sesión con colaborador_demo@kimun.cl (clave: kimun2024)")
-    except Exception as e:
-        return HttpResponse(f"Error generando datos: {str(e)}")
-
-
 @login_required
 def curso_list(request):
     if request.user.rol == 'colaborador':
