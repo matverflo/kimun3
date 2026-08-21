@@ -12,6 +12,7 @@ class Command(BaseCommand):
         docente, created = Usuario.objects.get_or_create(
             email='docente_demo@kimun.cl',
             defaults={
+                'username': 'docente_demo',
                 'first_name': 'Profesor',
                 'last_name': 'Demo',
                 'rol': 'docente',
@@ -27,6 +28,7 @@ class Command(BaseCommand):
         colaborador, created = Usuario.objects.get_or_create(
             email='colaborador_demo@kimun.cl',
             defaults={
+                'username': 'colaborador_demo',
                 'first_name': 'Juan',
                 'last_name': 'Pérez (Demo)',
                 'rol': 'colaborador',
