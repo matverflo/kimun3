@@ -25,7 +25,8 @@ except ImportError:
 def get_at_risk_students():
     """Returns list of dicts with user and risk reason."""
     from cursos.models import ClaseCompletado
-
+    from evaluaciones.models import IntentoEvaluacion
+    
     at_risk = []
     seven_days_ago = timezone.now() - timedelta(days=7)
 
@@ -33,51 +34,64 @@ def get_at_risk_students():
         estado__in=['asignado', 'en_progreso']
     ).select_related('usuario', 'curso')
 
+    if not enrollments:
+        return []
+
+    usuarios_ids = [e.usuario_id for e in enrollments]
+    cursos_ids = [e.curso_id for e in enrollments]
+
+    progresos = ClaseCompletado.objects.filter(
+        usuario_id__in=usuarios_ids,
+        clase__curso_id__in=cursos_ids
+    ).select_related('clase')
+    
+    dict_progresos = {}
+    dict_has_progress = {}
+    for p in progresos:
+        key = (p.usuario_id, p.clase.curso_id)
+        dict_has_progress[key] = True
+        if key not in dict_progresos or p.fecha_completado > dict_progresos[key]:
+            dict_progresos[key] = p.fecha_completado
+
+    intentos = IntentoEvaluacion.objects.filter(
+        usuario_id__in=usuarios_ids,
+        evaluacion__curso_id__in=cursos_ids
+    ).select_related('evaluacion')
+    
+    dict_intentos = {}
+    for i in intentos:
+        key = (i.usuario_id, i.evaluacion.curso_id)
+        if key not in dict_intentos:
+            dict_intentos[key] = []
+        dict_intentos[key].append(i)
+
     for enrollment in enrollments:
         risk_reason = None
-
+        key = (enrollment.usuario_id, enrollment.curso_id)
+        
+        has_progress = dict_has_progress.get(key, False)
+        
         if enrollment.fecha_asignacion < seven_days_ago:
-            if not hasattr(enrollment, 'completado') or not enrollment.completado:
-                has_progress = ClaseCompletado.objects.filter(
-                    usuario=enrollment.usuario,
-                    clase__curso=enrollment.curso
-                ).exists()
-                if not has_progress:
-                    risk_reason = "Sin actividad en 7+ días"
+            if not getattr(enrollment, 'completado', False) and not has_progress:
+                risk_reason = "Sin actividad en 7+ días"
 
-        if enrollment.fecha_limite:
+        if enrollment.fecha_limite and not risk_reason:
             days_to_deadline = (enrollment.fecha_limite - timezone.now()).days
-            if days_to_deadline <= 7 and days_to_deadline > 0:
-                has_passed = IntentoEvaluacion.objects.filter(
-                    usuario=enrollment.usuario,
-                    evaluacion__curso=enrollment.curso,
-                    aprobado=True
-                ).exists()
+            if 0 < days_to_deadline <= 7:
+                has_passed = any(i.aprobado for i in dict_intentos.get(key, []))
                 if not has_passed:
                     risk_reason = f"Deadline en {days_to_deadline} días sin aprobar evaluaciones"
 
-        failed_all = False
-        if IntentoEvaluacion.objects.filter(
-            usuario=enrollment.usuario,
-            evaluacion__curso=enrollment.curso
-        ).exists():
-            all_attempts = IntentoEvaluacion.objects.filter(
-                usuario=enrollment.usuario,
-                evaluacion__curso=enrollment.curso
-            )
-            if all(attempt.aprobado == False for attempt in all_attempts):
-                failed_all = True
+        if not risk_reason:
+            enrollment_intentos = dict_intentos.get(key, [])
+            if enrollment_intentos and all(not i.aprobado for i in enrollment_intentos):
                 risk_reason = "Ha reprobado todas las evaluaciones"
 
         if risk_reason:
             ultima_actividad = enrollment.fecha_asignacion
-            ultimo_progreso = ClaseCompletado.objects.filter(
-                usuario=enrollment.usuario,
-                clase__curso=enrollment.curso
-            ).order_by('-fecha_completado').first()
-            
-            if ultimo_progreso and ultimo_progreso.fecha_completado > ultima_actividad:
-                ultima_actividad = ultimo_progreso.fecha_completado
+            ultimo_progreso = dict_progresos.get(key)
+            if ultimo_progreso and ultimo_progreso > ultima_actividad:
+                ultima_actividad = ultimo_progreso
 
             at_risk.append({
                 'usuario': enrollment.usuario,
@@ -176,14 +190,30 @@ def reporte_curso(request, curso_pk):
     curso = get_object_or_404(Curso, pk=curso_pk)
     inscripciones = InscripcionCurso.objects.filter(curso=curso).select_related('usuario')
     
-    evaluaciones = curso.evaluaciones.all()
+    evaluaciones = list(curso.evaluaciones.all())
+    evaluaciones_ids = [e.id for e in evaluaciones]
+    usuarios_ids = [i.usuario_id for i in inscripciones]
+
+    # Map (usuario_id, evaluacion_id) -> list of attempts (sorted by date inside db)
+    intentos = IntentoEvaluacion.objects.filter(
+        usuario_id__in=usuarios_ids,
+        evaluacion_id__in=evaluaciones_ids
+    ).order_by('-fecha_intento')
+    
+    dict_intentos = {}
+    for intento in intentos:
+        key = (intento.usuario_id, intento.evaluacion_id)
+        if key not in dict_intentos:
+            dict_intentos[key] = []
+        dict_intentos[key].append(intento)
     
     for inscripcion in inscripciones:
         inscripcion.intentos_count = 0
         inscripcion.aprobado = True
         for evaluacion in evaluaciones:
-            ultimo = evaluacion.intentos.filter(usuario=inscripcion.usuario).order_by('-fecha_intento').first()
-            if ultimo:
+            intentos_usuario = dict_intentos.get((inscripcion.usuario_id, evaluacion.id), [])
+            if intentos_usuario:
+                ultimo = intentos_usuario[0] # Ya están ordenados por '-fecha_intento'
                 inscripcion.intentos_count += 1
                 if not ultimo.aprobado:
                     inscripcion.aprobado = False
@@ -231,6 +261,30 @@ def progreso_heatmap(request):
         clases = list(curso.clases.all())
         evaluaciones = list(curso.evaluaciones.all())
         
+        usuarios_ids = [e.usuario_id for e in enrollments]
+        clases_ids = [c.id for c in clases]
+        evaluaciones_ids = [e.id for e in evaluaciones]
+
+        # Prefetch completed classes
+        completados = ClaseCompletado.objects.filter(
+            usuario_id__in=usuarios_ids,
+            clase_id__in=clases_ids
+        ).values_list('usuario_id', 'clase_id')
+        set_completados = set(completados)
+
+        # Prefetch evaluation attempts
+        intentos = IntentoEvaluacion.objects.filter(
+            usuario_id__in=usuarios_ids,
+            evaluacion_id__in=evaluaciones_ids
+        ).order_by('-fecha_intento')
+        
+        dict_intentos = {}
+        for intento in intentos:
+            key = (intento.usuario_id, intento.evaluacion_id)
+            if key not in dict_intentos:
+                dict_intentos[key] = []
+            dict_intentos[key].append(intento)
+        
         for enrollment in enrollments:
             student_data = {
                 'usuario': enrollment.usuario,
@@ -239,10 +293,7 @@ def progreso_heatmap(request):
             }
             
             for clase in clases:
-                completado = ClaseCompletado.objects.filter(
-                    usuario=enrollment.usuario,
-                    clase=clase
-                ).exists()
+                completado = (enrollment.usuario_id, clase.id) in set_completados
                 student_data['items'].append({
                     'tipo': 'clase',
                     'titulo': clase.titulo,
@@ -250,19 +301,14 @@ def progreso_heatmap(request):
                 })
             
             for evaluacion in evaluaciones:
-                ultimo_intento = IntentoEvaluacion.objects.filter(
-                    usuario=enrollment.usuario,
-                    evaluacion=evaluacion
-                ).order_by('-fecha_intento').first()
+                intentos_usuario = dict_intentos.get((enrollment.usuario_id, evaluacion.id), [])
+                ultimo_intento = intentos_usuario[0] if intentos_usuario else None
                 
                 student_data['items'].append({
                     'tipo': 'evaluacion',
                     'titulo': evaluacion.titulo,
                     'completado': ultimo_intento.aprobado if ultimo_intento else False,
-                    'intentos': IntentoEvaluacion.objects.filter(
-                        usuario=enrollment.usuario,
-                        evaluacion=evaluacion
-                    ).count()
+                    'intentos': len(intentos_usuario)
                 })
             
             heatmap_data.append(student_data)
