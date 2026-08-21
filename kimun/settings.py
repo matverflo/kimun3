@@ -30,9 +30,10 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 if DEBUG:
     ALLOWED_HOSTS = ['*']
 else:
-    ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+    ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',') + ['kimun3.vercel.app', '.vercel.app']
 
-CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://127.0.0.1:8000,http://localhost:8000').split(',')
+env_csrf = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://127.0.0.1:8000,http://localhost:8000')
+CSRF_TRUSTED_ORIGINS = env_csrf.split(',') + ['https://kimun3.vercel.app']
 
 
 INSTALLED_APPS = [
