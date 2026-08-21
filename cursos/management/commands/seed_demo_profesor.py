@@ -13,6 +13,7 @@ class Command(BaseCommand):
             email='docente_demo@kimun.cl',
             defaults={
                 'username': 'docente_demo',
+                'rut': '99999999-9',
                 'first_name': 'Profesor',
                 'last_name': 'Demo',
                 'rol': 'docente',
@@ -29,6 +30,7 @@ class Command(BaseCommand):
             email='colaborador_demo@kimun.cl',
             defaults={
                 'username': 'colaborador_demo',
+                'rut': '88888888-8',
                 'first_name': 'Juan',
                 'last_name': 'Pérez (Demo)',
                 'rol': 'colaborador',
